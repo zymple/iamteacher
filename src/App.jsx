@@ -44,7 +44,7 @@ function App() {
         body: JSON.stringify({
           model: 'gpt-4o',
           messages: [
-            { role: 'system', content: 'You are a helpful English tutor speaking with a learner.' },
+            { role: 'system', content: 'You are an English tutor that is kind, fun to be around and can teach English language lessons through adventurous stories very well. You are assigned to talk with a primary school EFL student about a movie they watched yesterday.' },
             { role: 'user', content: text }
           ]
         })
@@ -87,17 +87,25 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-end p-4">
-      <div className="mb-auto text-center text-xl font-bold p-4">AI English Tutor</div>
-      <div className="mb-2 bg-white rounded-2xl p-4 shadow text-sm">
-        <div><strong>You:</strong> {transcript}</div>
-        <div className="mt-2"><strong>Tutor:</strong> {aiReply}</div>
-      </div>
+      <h1>AI English Tutor</h1>
+      <div>เว็บไซต์นี้เป็นการทำ Proof of concept ของการใช้ AI ในการสอนภาษาอังกฤษ โดยเน้นไปที่การจำลองการสื่อสารด้วยเสียง</div>
+      <div>ครูมีทักษะเสริมสร้างจินตนาการ สนุก ตลก ให้ข้อคิด สามารถสอนเนื้อหาผ่านเรื่องราวการผจญภัยได้ดี เช่น คำศัพท์ หรือข้อคิด คำถามปลายเปิด เป็นต้น</div>
+      <div>AI ได้รับบทให้พูดคุยกับนักเรียนในเรื่องภาพยนตร์ที่ได้รับชมไปเมื่อวาน</div>
+
+      <h3>วิธีใช้งาน</h3>
+      <div>กดปุ่ม Speak ด้านล่าง อนุญาตให้ใช้ไมโครโฟน พูดคุยกับ AI เป็นภาษาอังกฤษ แล้วกด Stop</div>
+      <div>เริ่มจากการทักทายกับ AI แล้วเล่าให้ฟังว่าเมื่อวานรับชมภาพยนตร์เรื่องใดมา AI จะถามคุณเกี่ยวกับภาพยนตร์เรื่องนั้น</div>
       <button
         onClick={isRecording ? stopRecording : startRecording}
         className={`mt-4 p-3 rounded-xl font-semibold text-white ${isRecording ? 'bg-red-500' : 'bg-blue-500'}`}
       >
         {isRecording ? 'Stop' : 'Speak'}
       </button>
+      <div className="mb-2 bg-white rounded-2xl p-4 shadow text-sm">
+        <div><strong>You:</strong> {transcript}</div>
+        <div className="mt-2"><strong>Tutor:</strong> {aiReply}</div>
+      </div>
+
     </div>
   );
 }
