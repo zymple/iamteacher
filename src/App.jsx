@@ -82,6 +82,12 @@ function App() {
 
   const stopRecording = () => {
     mediaRecorderRef.current.stop();
+
+    // Stop all tracks on the media stream
+    if (mediaRecorderRef.current.stream) {
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+    
     setIsRecording(false);
   };
 
