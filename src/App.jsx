@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+// ai-tutor-poc/src/App.jsx
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -9,109 +10,223 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const audioStreamRef = useRef(null);
+  const silenceTimerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const analyserRef = useRef(null);
+  const dataArrayRef = useRef(null);
+  const audioContextRef = useRef(null);
 
-  const startRecording = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    audioChunksRef.current = [];
+  useEffect(() => {
+    const initRecording = async () => {
+      audioStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(audioStreamRef.current);
 
-    mediaRecorderRef.current.ondataavailable = (e) => {
-      audioChunksRef.current.push(e.data);
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        const inputAudioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        audioChunksRef.current = []; // Clear for next recording
+        const formData = new FormData();
+        formData.append('file', inputAudioBlob, 'input.webm');
+        formData.append('model', 'whisper-1');
+
+        const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`
+          },
+          body: formData
+        });
+        const { text } = await whisperRes.json();
+        setTranscript(text);
+
+        const chatRes = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: 'You are an English tutor that is kind, fun to be around and can teach English language lessons through adventurous stories very well. You are assigned to talk with a primary school EFL student about a movie they watched yesterday. The conversation will be in English.' },
+              { role: 'user', content: text }
+            ]
+          })
+        });
+        const chatData = await chatRes.json();
+        if (!chatData.choices || !chatData.choices[0]) {
+          console.error('Chat API response error:', chatData);
+          setAiReply('Sorry, something went wrong with the AI response.');
+          return;
+        }
+        const reply = chatData.choices[0].message.content;
+        setAiReply(reply);
+
+        const speechRes = await fetch('https://api.openai.com/v1/audio/speech', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'tts-1-hd',
+            voice: 'nova',
+            input: reply
+          })
+        });
+        const outputAudioBlob = await speechRes.blob();
+        const audioUrl = URL.createObjectURL(outputAudioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+
+        audio.onended = () => {
+          if (mediaRecorderRef.current && audioStreamRef.current) {
+            audioChunksRef.current = [];
+            mediaRecorderRef.current.start();
+            setIsRecording(true);
+            monitorSilence();
+          }
+        };
+      };
     };
 
-    mediaRecorderRef.current.onstop = async () => {
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'input.webm');
-      formData.append('model', 'whisper-1');
+    initRecording();
+  }, []);
 
-      const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`
-        },
-        body: formData
-      });
-      const { text } = await whisperRes.json();
-      setTranscript(text);
+  const monitorSilence = () => {
+  if (!audioStreamRef.current) return;
 
-      const chatRes = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'You are an English tutor that is kind, fun to be around and can teach English language lessons through adventurous stories very well. You are assigned to talk with a primary school EFL student about a movie they watched yesterday.' },
-            { role: 'user', content: text }
-          ]
-        })
-      });
-      const chatData = await chatRes.json();
-      if (!chatData.choices || !chatData.choices[0]) {
-        console.error('Chat API response error:', chatData);
-        setAiReply('Sorry, something went wrong with the AI response.');
-        return;
+  if (audioContextRef.current) {
+    audioContextRef.current.close();
+  }
+  audioContextRef.current = new AudioContext();
+
+  // Resume AudioContext to avoid browser autoplay policy issues
+  audioContextRef.current.resume().then(() => {
+    const source = audioContextRef.current.createMediaStreamSource(audioStreamRef.current);
+    const analyser = audioContextRef.current.createAnalyser();
+    analyser.fftSize = 2048;
+    analyserRef.current = analyser;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    dataArrayRef.current = dataArray;
+    source.connect(analyser);
+
+    const canvas = canvasRef.current;
+    const canvasCtx = canvas.getContext('2d');
+
+    const SILENCE_THRESHOLD = 0.02;  // Adjust as needed (0 to 1 scale)
+    const SILENCE_TIMEOUT = 1500; // ms
+
+    let silenceStart = null;
+
+    const checkSilenceAndDraw = () => {
+      analyser.getByteTimeDomainData(dataArray);
+
+      // Draw waveform (same as before)
+      canvasCtx.fillStyle = '#000';
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+      canvasCtx.lineWidth = 2;
+      canvasCtx.strokeStyle = '#00ff00';
+      canvasCtx.beginPath();
+
+      const sliceWidth = canvas.width / bufferLength;
+      let x = 0;
+
+      for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i] / 128.0;
+        const y = v * canvas.height / 2;
+        if (i === 0) {
+          canvasCtx.moveTo(x, y);
+        } else {
+          canvasCtx.lineTo(x, y);
+        }
+        x += sliceWidth;
       }
-      const reply = chatData.choices[0].message.content;
-      setAiReply(reply);
+      canvasCtx.lineTo(canvas.width, canvas.height / 2);
+      canvasCtx.stroke();
 
-      const speechRes = await fetch('https://api.openai.com/v1/audio/speech', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'tts-1-hd',
-          voice: 'nova',
-          input: reply
-        })
-      });
-      const outputAudioBlob = await speechRes.blob();
-      const audioUrl = URL.createObjectURL(outputAudioBlob);
-      const audio = new Audio(audioUrl);
-      audio.play();
+      // RMS calculation
+      let sumSquares = 0;
+      for (let i = 0; i < bufferLength; i++) {
+        const normalized = (dataArray[i] - 128) / 128;
+        sumSquares += normalized * normalized;
+      }
+      const rms = Math.sqrt(sumSquares / bufferLength);
+
+      if (rms < SILENCE_THRESHOLD) {
+        // Silence detected
+        if (!silenceStart) silenceStart = Date.now();
+        else if (Date.now() - silenceStart > SILENCE_TIMEOUT) {
+          if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            audioContextRef.current.close();
+          }
+          silenceStart = null; // reset after stopping
+          return; // stop animation loop on silence stop
+        }
+      } else {
+        // Sound detected
+        silenceStart = null;
+      }
+
+      requestAnimationFrame(checkSilenceAndDraw);
     };
 
-    mediaRecorderRef.current.start();
-    setIsRecording(true);
-  };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current.stop();
+  });
+};
 
-    // Stop all tracks on the media stream
-    if (mediaRecorderRef.current.stream) {
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+  const toggleRecording = () => {
+    if (!isRecording) {
+      audioChunksRef.current = [];
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      monitorSilence();
+    } else {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
-
-    setIsRecording(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col justify-end p-4">
-      <h1>AI English Tutor</h1>
-      <div>เว็บไซต์นี้เป็นการทำ Proof of concept ของการใช้ AI ในการสอนภาษาอังกฤษ โดยเน้นไปที่การจำลองการสื่อสารด้วยเสียง</div>
-      <div>ครูมีทักษะเสริมสร้างจินตนาการ สนุก ตลก ให้ข้อคิด สามารถสอนเนื้อหาผ่านเรื่องราวการผจญภัยได้ดี เช่น คำศัพท์ หรือข้อคิด คำถามปลายเปิด เป็นต้น</div>
-      <div>AI ได้รับบทให้พูดคุยกับนักเรียนในเรื่องภาพยนตร์ที่ได้รับชมไปเมื่อวาน</div>
+    <div className="app-container">
+      <div className="scene-wrapper">
+        <img src="/tutor_f.png" alt="Tutor Avatar" className="avatar" />
 
-      <h3>วิธีใช้งาน</h3>
-      <div>กดปุ่ม Speak ด้านล่าง อนุญาตให้ใช้ไมโครโฟน พูดคุยกับ AI เป็นภาษาอังกฤษ แล้วกด Stop</div>
-      <div>เริ่มจากการทักทายกับ AI แล้วเล่าให้ฟังว่าเมื่อวานรับชมภาพยนตร์เรื่องใดมา AI จะถามคุณเกี่ยวกับภาพยนตร์เรื่องนั้น</div>
-      <button
-        onClick={isRecording ? stopRecording : startRecording}
-        className={`mt-4 p-3 rounded-xl font-semibold text-white ${isRecording ? 'bg-red-500' : 'bg-blue-500'}`}
-      >
-        {isRecording ? 'Stop' : 'Speak'}
-      </button>
-      <div className="mb-2 bg-white rounded-2xl p-4 shadow text-sm">
-        <div><strong>You:</strong> {transcript}</div>
-        <div className="mt-2"><strong>Tutor:</strong> {aiReply}</div>
+        <div className="dialogue-box">
+          <div className="dialogue-text">
+            <strong>You:</strong> {transcript || <em>Say something…</em>}
+          </div>
+          <div className="dialogue-text">
+            <strong>Tutor:</strong> {aiReply || <em>Waiting for your question…</em>}
+          </div>
+        </div>
+
+        {isRecording && (
+          <canvas
+            ref={canvasRef}
+            width={300}
+            height={60}
+            className="waveform-canvas"
+          />
+        )}
+
+        <div className="button-container">
+          <button
+            onClick={toggleRecording}
+            className={`control-button ${isRecording ? 'recording' : 'idle'}`}
+          >
+            {isRecording ? 'Stop' : 'Speak'}
+          </button>
+        </div>
       </div>
-
     </div>
   );
 }
