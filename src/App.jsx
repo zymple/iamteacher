@@ -52,7 +52,7 @@ function App() {
           body: JSON.stringify({
             model: 'gpt-4o',
             messages: [
-              { role: 'system', content: 'You are an English tutor that is kind, fun to be around and can teach English language lessons through adventurous stories very well. You are assigned to talk with a primary school EFL student about a movie they watched yesterday. The conversation will be in English.' },
+              { role: 'system', content: 'You are an English tutor that is kind, fun to be around and can teach English language lessons through adventurous stories very well. You are assigned to talk with a primary school EFL student about a movie they watched yesterday. The conversation will start in Thai and the teacheer will transition the conversation to English.' },
               { role: 'user', content: text }
             ]
           })
@@ -223,7 +223,7 @@ function App() {
             onClick={toggleRecording}
             className={`control-button ${isRecording ? 'recording' : 'idle'}`}
           >
-            {isRecording ? 'Stop' : 'Speak'}
+            {isRecording ? 'ฉันพูดเสร็จแล้ว' : 'พูด'}
           </button>
         </div>
       </div>
