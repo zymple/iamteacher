@@ -71,7 +71,7 @@ function App() {
         })
       });
       const outputAudioBlob = await speechRes.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      const audioUrl = URL.createObjectURL(outputAudioBlob);
       const audio = new Audio(audioUrl);
       audio.play();
     };
@@ -87,7 +87,7 @@ function App() {
     if (mediaRecorderRef.current.stream) {
       mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
     }
-    
+
     setIsRecording(false);
   };
 
