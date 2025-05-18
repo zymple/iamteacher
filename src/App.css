@@ -2,11 +2,13 @@
   box-sizing: border-box;
 }
 
-
-
 body {
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(to bottom, #bae6fd, #ffffff);
   color: #1f2937;
   height: 100vh;
@@ -17,21 +19,21 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   padding: 1rem;
 }
 
 .scene-wrapper {
-  position: relative;
-  max-width: 640px;
-  width: 100%;
   padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .avatar {
-  width: 256px;
-  height: 256px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   border: 4px solid white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -44,19 +46,24 @@ body {
   border: 1px solid #d1d5db;
   border-radius: 1.5rem;
   padding: 1.5rem;
-  margin-top: 6rem;
+  margin-top: 1.5rem;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   animation: fadeIn 0.5s ease-in-out;
 }
 
 .dialogue-text {
-  font-size: 20pt;
+  font-size: 18pt;
   color: #374151;
   margin-bottom: 1rem;
 }
 
 .dialogue-text strong {
   color: #111827;
+}
+
+.page-title {
+  position: absolute;
+  top: 2%;
 }
 
 .control-button {
@@ -66,7 +73,7 @@ body {
   font-weight: 700;
   color: white;
   width: 8cm;
-  height: 2cm;
+  height: 3cm;
   border: none;
   border-radius: 9999px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
