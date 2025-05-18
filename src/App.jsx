@@ -202,10 +202,10 @@ function App() {
 
         <div className="dialogue-box">
           <div className="dialogue-text">
-            <strong>You:</strong> {transcript || <em>Say something…</em>}
+            <strong>คุณ:</strong> {transcript || <em>ลองพูดอะไรบางอย่าง</em>}
           </div>
           <div className="dialogue-text">
-            <strong>Tutor:</strong> {aiReply || <em>Waiting for your question…</em>}
+            <strong>ติวเตอร์:</strong> {aiReply || <em>กำลังรอคำถามของคุณ</em>}
           </div>
         </div>
 
