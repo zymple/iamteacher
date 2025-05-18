@@ -196,8 +196,16 @@ function App() {
   };
 
   return (
+    
     <div className="app-container">
+
+      <div className="page-title">
+          <strong>AI English Tutor - Yesterday's movie</strong>
+        </div>
+      
       <div className="scene-wrapper">
+
+        
         <img src="/tutor_f.png" alt="Tutor Avatar" className="avatar" />
 
         <div className="dialogue-box">
