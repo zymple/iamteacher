@@ -155,12 +155,7 @@ Teacher: Good job! How about Magic – something special and powerful.
         audio.play();
 
         audio.onended = () => {
-          if (mediaRecorderRef.current && audioStreamRef.current) {
-            audioChunksRef.current = [];
-            mediaRecorderRef.current.start();
-            setIsRecording(true);
-            monitorSilence();
-          }
+          // Do nothing here — wait for user to press the button
         };
       };
     };
