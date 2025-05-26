@@ -57,6 +57,8 @@ function App() {
 
 เป้าหมายคือการทำให้เด็กสนุกไปกับบทสนทนาและได้ฝึกใช้ภาษาอังกฤษอย่างมั่นใจ
 
+Please give one short reply at a time.
+
 Example conversation:
 
 Student: สวัสดีค่ะ/ครับคุณครู
