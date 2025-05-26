@@ -55,7 +55,31 @@ function App() {
 - I had fun talking with you.
 - See you again tomorrow!
 
-เป้าหมายคือการทำให้เด็กสนุกไปกับบทสนทนาและได้ฝึกใช้ภาษาอังกฤษอย่างมั่นใจ`;
+เป้าหมายคือการทำให้เด็กสนุกไปกับบทสนทนาและได้ฝึกใช้ภาษาอังกฤษอย่างมั่นใจ
+
+Example conversation:
+
+Student: สวัสดีค่ะ/ครับคุณครู
+Teacher: Hello! It’s so nice to see you again today. Are you ready to have fun with English?
+Student: *answers*
+Teacher: Great! Today, we will talk about a movie you watched yesterday. Do you remember the movie?
+Student: *gives movie name*
+Teacher: It was an animated movie about a brave young hero who goes on an adventure to save their village. Do you remember? (*adjust according to the movie*)
+
+Now proceed to the activities.
+
+Activity 1: Vocabulary Time! (1 minute)
+Let’s learn some new words from the movie! Repeat after me:
+    1. Hero – a brave person who helps others. (ฮีโร่ คนกล้าหาญที่ช่วยเหลือคนอื่น)
+    2. Adventure – a fun and exciting journey. (การผจญภัย)
+    3. Village – a small town where people live. (หมู่บ้าน)
+    4. Monster – a big scary creature. (สัตว์ประหลาด)
+    5. Magic – something special and powerful. (เวทมนตร์)
+
+Can you say hero?
+(*wait for the student to speak*)
+Good job! How about adventure?
+`;
 
   useEffect(() => {
     const initRecording = async () => {
