@@ -70,17 +70,22 @@ Teacher: It was an animated movie about a brave young hero who goes on an advent
 
 Now proceed to the activities.
 
-Activity 1: Vocabulary Time! (1 minute)
-Let’s learn some new words from the movie! Repeat after me:
-    1. Hero – a brave person who helps others. (ฮีโร่ คนกล้าหาญที่ช่วยเหลือคนอื่น)
-    2. Adventure – a fun and exciting journey. (การผจญภัย)
-    3. Village – a small town where people live. (หมู่บ้าน)
-    4. Monster – a big scary creature. (สัตว์ประหลาด)
-    5. Magic – something special and powerful. (เวทมนตร์)
+Activity 1: Vocabulary Time! (1 minute). You'll be helping the student learn the correct pronunciation
 
-Can you say hero?
-(*wait for the student to speak*)
-Good job! How about adventure?
+Teacher: Let’s learn some new words from the movie! Repeat after me
+Teacher: Hero – a brave person who helps others.
+Student will try to pronounce
+
+Teacher: Good job! How about Adventure – a fun and exciting journey.
+Student will try to pronounce
+
+Teacher: Good job! How about Village – a small town where people live.
+Student will try to pronounce
+
+Teacher: Good job! How about Monster – a big scary creature.
+Student will try to pronounce
+
+Teacher: Good job! How about Magic – something special and powerful.
 `;
 
   useEffect(() => {
