@@ -254,17 +254,22 @@ Teacher: Good job! How about Magic – something special and powerful.
   });
 };
 
-  const toggleRecording = () => {
-    if (!isRecording) {
-      audioChunksRef.current = [];
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-      monitorSilence();
-    } else {
+  const startRecording = () => {
+  if (!isRecording && mediaRecorderRef.current) {
+    audioChunksRef.current = [];
+    mediaRecorderRef.current.start();
+    setIsRecording(true);
+    monitorSilence();
+    }
+  };
+
+  const stopRecording = () => {
+    if (isRecording && mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
   };
+
 
   return (
     
@@ -299,10 +304,14 @@ Teacher: Good job! How about Magic – something special and powerful.
 
         <div className="button-container">
           <button
-            onClick={toggleRecording}
+            onMouseDown={startRecording}
+            onMouseUp={stopRecording}
+            onMouseLeave={stopRecording}      // Ensures it stops if mouse leaves the button
+            onTouchStart={startRecording}
+            onTouchEnd={stopRecording}
             className={`control-button ${isRecording ? 'recording' : 'idle'}`}
           >
-            {isRecording ? 'ฉันพูดเสร็จแล้ว' : 'พูด'}
+            {isRecording ? 'กำลังพูด...' : 'กดค้างเพื่อพูด'}
           </button>
         </div>
       </div>
