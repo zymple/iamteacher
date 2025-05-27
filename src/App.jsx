@@ -175,28 +175,6 @@ Teacher: Good job! How about Magic – something special and powerful.
             }
           }
         }
-
-
-        // const speechRes = await fetch('https://api.openai.com/v1/audio/speech', {
-        //   method: 'POST',
-        //   headers: {
-        //     'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        //     'Content-Type': 'application/json'
-        //   },
-        //   body: JSON.stringify({
-        //     model: 'tts-1-hd',
-        //     voice: 'nova',
-        //     input: reply
-        //   })
-        // });
-        // const outputAudioBlob = await speechRes.blob();
-        // const audioUrl = URL.createObjectURL(outputAudioBlob);
-        // const audio = new Audio(audioUrl);
-        // audio.play();
-
-        // audio.onended = () => {
-        //   // Do nothing here — wait for user to press the button
-        // };
       };
     };
 
