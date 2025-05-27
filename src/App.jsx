@@ -181,98 +181,11 @@ Teacher: Good job! How about Magic – something special and powerful.
     initRecording();
   }, []);
 
-  const monitorSilence = () => {
-  if (!audioStreamRef.current) return;
-
-  if (audioContextRef.current) {
-    audioContextRef.current.close();
-  }
-  audioContextRef.current = new AudioContext();
-
-  // Resume AudioContext to avoid browser autoplay policy issues
-  audioContextRef.current.resume().then(() => {
-    const source = audioContextRef.current.createMediaStreamSource(audioStreamRef.current);
-    const analyser = audioContextRef.current.createAnalyser();
-    analyser.fftSize = 2048;
-    analyserRef.current = analyser;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    dataArrayRef.current = dataArray;
-    source.connect(analyser);
-
-    const canvas = canvasRef.current;
-    const canvasCtx = canvas.getContext('2d');
-
-    const SILENCE_THRESHOLD = 0.02;  // Adjust as needed (0 to 1 scale)
-    const SILENCE_TIMEOUT = 1500; // ms
-
-    let silenceStart = null;
-
-    const checkSilenceAndDraw = () => {
-      analyser.getByteTimeDomainData(dataArray);
-
-      // Draw waveform (same as before)
-      canvasCtx.fillStyle = '#000';
-      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-
-      canvasCtx.lineWidth = 2;
-      canvasCtx.strokeStyle = '#00ff00';
-      canvasCtx.beginPath();
-
-      const sliceWidth = canvas.width / bufferLength;
-      let x = 0;
-
-      for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = v * canvas.height / 2;
-        if (i === 0) {
-          canvasCtx.moveTo(x, y);
-        } else {
-          canvasCtx.lineTo(x, y);
-        }
-        x += sliceWidth;
-      }
-      canvasCtx.lineTo(canvas.width, canvas.height / 2);
-      canvasCtx.stroke();
-
-      // RMS calculation
-      let sumSquares = 0;
-      for (let i = 0; i < bufferLength; i++) {
-        const normalized = (dataArray[i] - 128) / 128;
-        sumSquares += normalized * normalized;
-      }
-      const rms = Math.sqrt(sumSquares / bufferLength);
-
-      if (rms < SILENCE_THRESHOLD) {
-        // Silence detected
-        if (!silenceStart) silenceStart = Date.now();
-        else if (Date.now() - silenceStart > SILENCE_TIMEOUT) {
-          if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-            audioContextRef.current.close();
-          }
-          silenceStart = null; // reset after stopping
-          return; // stop animation loop on silence stop
-        }
-      } else {
-        // Sound detected
-        silenceStart = null;
-      }
-
-      requestAnimationFrame(checkSilenceAndDraw);
-    };
-
-
-  });
-};
-
   const startRecording = () => {
   if (!isRecording && mediaRecorderRef.current) {
     audioChunksRef.current = [];
     mediaRecorderRef.current.start();
     setIsRecording(true);
-    monitorSilence();
     }
   };
 
