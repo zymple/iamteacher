@@ -11,7 +11,6 @@ function App() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioStreamRef = useRef(null);
-  const silenceTimerRef = useRef(null);
   const canvasRef = useRef(null);
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
@@ -114,7 +113,10 @@ Teacher: Good job! How about Magic – something special and powerful.
         const { text } = await whisperRes.json();
         setTranscript(text);
 
-        const chatRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        setAiReply(''); // Clear previous reply
+        let fullText = '';
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${OPENAI_API_KEY}`,
@@ -122,41 +124,79 @@ Teacher: Good job! How about Magic – something special and powerful.
           },
           body: JSON.stringify({
             model: 'gpt-4o',
+            stream: true,
             messages: [
               { role: 'system', content: systemContent },
               { role: 'user', content: text }
             ]
           })
         });
-        const chatData = await chatRes.json();
-        if (!chatData.choices || !chatData.choices[0]) {
-          console.error('Chat API response error:', chatData);
-          setAiReply('Sorry, something went wrong with the AI response.');
-          return;
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.replace('data: ', '');
+              if (data === '[DONE]') {
+                // After full reply received, synthesize speech
+                const speechRes = await fetch('https://api.openai.com/v1/audio/speech', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${OPENAI_API_KEY}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    model: 'tts-1-hd',
+                    voice: 'nova',
+                    input: fullText
+                  })
+                });
+                const outputAudioBlob = await speechRes.blob();
+                const audioUrl = URL.createObjectURL(outputAudioBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+                return;
+              }
+
+              const parsed = JSON.parse(data);
+              const delta = parsed.choices?.[0]?.delta?.content;
+              if (delta) {
+                fullText += delta;
+                setAiReply(prev => prev + delta);
+              }
+            }
+          }
         }
-        const reply = chatData.choices[0].message.content;
-        setAiReply(reply);
 
-        const speechRes = await fetch('https://api.openai.com/v1/audio/speech', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'tts-1-hd',
-            voice: 'nova',
-            input: reply
-          })
-        });
-        const outputAudioBlob = await speechRes.blob();
-        const audioUrl = URL.createObjectURL(outputAudioBlob);
-        const audio = new Audio(audioUrl);
-        audio.play();
 
-        audio.onended = () => {
-          // Do nothing here — wait for user to press the button
-        };
+        // const speechRes = await fetch('https://api.openai.com/v1/audio/speech', {
+        //   method: 'POST',
+        //   headers: {
+        //     'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        //     'Content-Type': 'application/json'
+        //   },
+        //   body: JSON.stringify({
+        //     model: 'tts-1-hd',
+        //     voice: 'nova',
+        //     input: reply
+        //   })
+        // });
+        // const outputAudioBlob = await speechRes.blob();
+        // const audioUrl = URL.createObjectURL(outputAudioBlob);
+        // const audio = new Audio(audioUrl);
+        // audio.play();
+
+        // audio.onended = () => {
+        //   // Do nothing here — wait for user to press the button
+        // };
       };
     };
 
