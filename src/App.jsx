@@ -306,15 +306,6 @@ Teacher: Good job! How about Magic – something special and powerful.
           </div>
         </div>
 
-        {isRecording && (
-          <canvas
-            ref={canvasRef}
-            width={300}
-            height={60}
-            className="waveform-canvas"
-          />
-        )}
-
         <div className="button-container">
           <button
             onMouseDown={startRecording}
