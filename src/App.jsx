@@ -1,5 +1,5 @@
-// ai-tutor-poc/src/App.jsx
-import React, { useState, useRef, useEffect } from 'react';
+// src/App.jsx
+import React, { useState, useRef } from 'react';
 import './App.css';
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
@@ -8,9 +8,10 @@ function App() {
   const [transcript, setTranscript] = useState('');
   const [aiReply, setAiReply] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+
+  const wsRef = useRef(null);
   const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const audioStreamRef = useRef(null);
+
   const systemContent = `คุณเป็นครูสอนภาษาอังกฤษที่ใจดี เป็นกันเอง และสอนภาษาอังกฤษผ่านการใช้เรื่องราวหรือบทสนทนาได้เป็นอย่างดีอและสนุกสนาน
 
 คุณได้รับมอบหมายให้พูดคุยกับนักเรียนระดับประถมที่เรียนภาษาอังกฤษเป็นภาษาต่างประเทศ (EFL) เพื่อช่วยให้นักเรียนเรียนรู้ภาษาอังกฤษอย่างเป็นธรรมชาติ
@@ -81,129 +82,94 @@ Teacher: Good job! How about Monster – a big scary creature.
 Student will try to pronounce
 
 Teacher: Good job! How about Magic – something special and powerful.
-`;
+`; // (keep your full system prompt here)
 
-  useEffect(() => {
-    const initRecording = async () => {
-      audioStreamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(audioStreamRef.current);
+  const connectRealtime = async () => {
+    if (wsRef.current) return;
 
-      mediaRecorderRef.current.ondataavailable = (e) => {
-        audioChunksRef.current.push(e.data);
-      };
+    const ws = new WebSocket(`wss://api.openai.com/v1/realtime?authorization=Bearer ${OPENAI_API_KEY}`);
+    wsRef.current = ws;
 
-      mediaRecorderRef.current.onstop = async () => {
-        const inputAudioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        audioChunksRef.current = []; // Clear for next recording
-        const formData = new FormData();
-        formData.append('file', inputAudioBlob, 'input.webm');
-        formData.append('model', 'whisper-1');
-
-        const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY}`
-          },
-          body: formData
-        });
-        const { text } = await whisperRes.json();
-        setTranscript(text);
-
-        setAiReply(''); // Clear previous reply
-        let fullText = '';
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o',
-            stream: true,
-            messages: [
-              { role: 'system', content: systemContent },
-              { role: 'user', content: text }
-            ]
-          })
-        });
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n').filter(line => line.trim() !== '');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.replace('data: ', '');
-              if (data === '[DONE]') {
-                // After full reply received, synthesize speech
-                const speechRes = await fetch('https://api.openai.com/v1/audio/speech', {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${OPENAI_API_KEY}`,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    model: 'tts-1-hd',
-                    voice: 'nova',
-                    input: fullText
-                  })
-                });
-                const outputAudioBlob = await speechRes.blob();
-                const audioUrl = URL.createObjectURL(outputAudioBlob);
-                const audio = new Audio(audioUrl);
-                audio.play();
-                return;
-              }
-
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices?.[0]?.delta?.content;
-              if (delta) {
-                fullText += delta;
-                setAiReply(prev => prev + delta);
-              }
-            }
+    ws.onopen = () => {
+      ws.send(JSON.stringify({
+        type: 'start',
+        model: 'gpt-4o',
+        config: {
+          audio: {
+            input: { encoding: 'webm-opus' },
+            output: { voice: 'nova' }
           }
-        }
-      };
+        },
+        messages: [{ role: 'system', content: systemContent }]
+      }));
     };
 
-    initRecording();
-  }, []);
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if (msg.type === 'transcript') {
+        setTranscript(msg.text || '');
+      } else if (msg.type === 'content') {
+        setAiReply(prev => prev + (msg.delta || ''));
+      } else if (msg.type === 'audio') {
+        const audioBlob = new Blob([msg.audio], { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        audio.play().catch(() => {
+          console.warn("Mobile autoplay may be blocked until user gesture");
+        });
+      }
+    };
 
-  const startRecording = () => {
-  if (!isRecording && mediaRecorderRef.current) {
-    audioChunksRef.current = [];
-    mediaRecorderRef.current.start();
+    ws.onerror = (err) => console.error("WebSocket error", err);
+    ws.onclose = () => {
+      console.log("WebSocket closed");
+      wsRef.current = null;
+    };
+  };
+
+  const startRecording = async () => {
+    await connectRealtime();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const recorder = new MediaRecorder(stream, {
+      mimeType: 'audio/webm;codecs=opus',
+      audioBitsPerSecond: 64000
+    });
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0 && wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(e.data);
+      }
+    };
+
+    recorder.start(250); // Send every 250ms
+    mediaRecorderRef.current = recorder;
+    setTranscript('');
+    setAiReply('');
     setIsRecording(true);
-    }
   };
 
   const stopRecording = () => {
-    if (isRecording && mediaRecorderRef.current) {
+    if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current = null;
+    }
+    setIsRecording(false);
+
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'stop' }));
     }
   };
 
-
   return (
-    
     <div className="app-container">
 
       <div className="page-title">
-          <strong>AI English Tutor - Yesterday's movie</strong>
-        </div>
-      
-      <div className="scene-wrapper">
+        <strong>AI English Tutor - Yesterday's movie</strong>
+      </div>
 
-        
+      <div className="scene-wrapper">
         <img src="/tutor_f.png" alt="Tutor Avatar" className="avatar" />
 
         <div className="dialogue-box">
@@ -217,11 +183,11 @@ Teacher: Good job! How about Magic – something special and powerful.
 
         <div className="button-container">
           <button
-            onMouseDown={startRecording}
-            onMouseUp={stopRecording}
-            onMouseLeave={stopRecording}      // Ensures it stops if mouse leaves the button
             onTouchStart={startRecording}
             onTouchEnd={stopRecording}
+            onMouseDown={startRecording}
+            onMouseUp={stopRecording}
+            onMouseLeave={stopRecording}
             className={`control-button ${isRecording ? 'recording' : 'idle'}`}
           >
             {isRecording ? 'กำลังพูด...' : 'กดค้างเพื่อพูด'}
