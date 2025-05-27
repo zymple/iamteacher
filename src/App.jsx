@@ -121,8 +121,8 @@ Teacher: Good job! How about Magic – something special and powerful.
     };
 
     ws.onerror = (err) => console.error("WebSocket error", err);
-    ws.onclose = () => {
-      console.log("WebSocket closed");
+    ws.onclose = (e) => {
+      console.warn("WebSocket closed", e.code, e.reason);
       wsRef.current = null;
     };
   };
