@@ -11,10 +11,6 @@ function App() {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioStreamRef = useRef(null);
-  const canvasRef = useRef(null);
-  const analyserRef = useRef(null);
-  const dataArrayRef = useRef(null);
-  const audioContextRef = useRef(null);
   const systemContent = `คุณเป็นครูสอนภาษาอังกฤษที่ใจดี เป็นกันเอง และสอนภาษาอังกฤษผ่านการใช้เรื่องราวหรือบทสนทนาได้เป็นอย่างดีอและสนุกสนาน
 
 คุณได้รับมอบหมายให้พูดคุยกับนักเรียนระดับประถมที่เรียนภาษาอังกฤษเป็นภาษาต่างประเทศ (EFL) เพื่อช่วยให้นักเรียนเรียนรู้ภาษาอังกฤษอย่างเป็นธรรมชาติ
