@@ -41,18 +41,29 @@ Only reply with one or two short English sentences at a time.`; // (keep your fu
     };
 
     ws.onmessage = (event) => {
-      const msg = JSON.parse(event.data);
-      if (msg.type === 'transcript') {
-        setTranscript(msg.text || '');
-      } else if (msg.type === 'content') {
-        setAiReply(prev => prev + (msg.delta || ''));
-      } else if (msg.type === 'audio') {
-        const audioBlob = new Blob([msg.audio], { type: 'audio/mpeg' });
+      // Check if message is binary (audio), not JSON
+      if (typeof event.data !== 'string') {
+        // Handle binary audio message
+        const audioBlob = new Blob([event.data], { type: 'audio/mpeg' });
         const audioUrl = URL.createObjectURL(audioBlob);
         const audio = new Audio(audioUrl);
         audio.play().catch(() => {
           console.warn("Mobile autoplay may be blocked until user gesture");
         });
+        return;
+      }
+
+      // Parse JSON message (transcript, content, etc.)
+      try {
+        const msg = JSON.parse(event.data);
+
+        if (msg.type === 'transcript') {
+          setTranscript(msg.text || '');
+        } else if (msg.type === 'content') {
+          setAiReply(prev => prev + (msg.delta || ''));
+        }
+      } catch (err) {
+        console.error("Failed to parse JSON", event.data, err);
       }
     };
 
