@@ -23,7 +23,7 @@ Only reply with one or two short English sentences at a time.`; // (keep your fu
   const connectRealtime = async () => {
     if (wsRef.current) return;
 
-    const ws = new WebSocket(`wss://api.openai.com/v1/realtime?authorization=Bearer ${OPENAI_API_KEY}`);
+    const ws = new WebSocket(`wss://ai-tutor-proxy.techtransthai.org`);
     wsRef.current = ws;
 
     ws.onopen = () => {
