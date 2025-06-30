@@ -1,8 +1,22 @@
-# OpenAI Realtime Console
+# iAmTeacher
 
-This is an example application showing how to use the [OpenAI Realtime API](https://platform.openai.com/docs/guides/realtime) with [WebRTC](https://platform.openai.com/docs/guides/realtime-webrtc).
+iAmTeacher (pronounced I am teacher) is an AI-powered English tutor app for students in rural areas, which most of them lack capable English teachers. This app will focus on vocal conversations, while also including written quizzes and other educational activities.
 
-## Installation and usage
+## How it works (conversation)
+The vocal conversation parts will be working with OpenAI's Realtime API services. We'll give it a system prompt, and these will happen during the conversation:
+
+1. Student starts the conversation
+2. The frontend app will connect to the proxy via WebRTC and that will be passed through to OpenAI's transcriptions API.
+3. What the student said will be transcribed and be an input to the LLM.
+4. The output of the LLM will go into Text-to-Speech and played on the student's device.
+5. Repeat 3-4 until conversation goals accomplished and finished
+
+## Features we should have
+
+- Multiple tuition/teaching styles to choose from
+- The possibility of tailoring contents according to student's skill level and learning goals
+
+## Setting up for local development
 
 Before you begin, you'll need an OpenAI API key - [create one in the dashboard here](https://platform.openai.com/settings/api-keys). Create a `.env` file from the example file and set your API key in there:
 
@@ -24,16 +38,15 @@ npm run dev
 
 This should start the console application on [http://localhost:3000](http://localhost:3000).
 
-This application is a minimal template that uses [express](https://expressjs.com/) to serve the React frontend contained in the [`/client`](./client) folder. The server is configured to use [vite](https://vitejs.dev/) to build the React frontend.
-
-This application shows how to send and receive Realtime API events over the WebRTC data channel and configure client-side function calling. You can also view the JSON payloads for client and server events using the logging panel in the UI.
-
-For a more comprehensive example, see the [OpenAI Realtime Agents](https://github.com/openai/openai-realtime-agents) demo built with Next.js, using an agentic architecture inspired by [OpenAI Swarm](https://github.com/openai/swarm).
-
-## Previous WebSockets version
-
-The previous version of this application that used WebSockets on the client (not recommended in browsers) [can be found here](https://github.com/openai/openai-realtime-console/tree/websockets).
 
 ## License
 
-MIT
+- iAmTeacher Frontend/app is licensed under GPLv3 license. 
+
+## Special Thanks
+
+This project is made possible by
+
+<img src="assets/ots.png" alt="opentech" height="50"/>
+<img src="assets/zymple.png" alt="Zymple" height="50"/>
+<img src="assets/ttt-org.svg" alt="ttt-org" height="50"/>
