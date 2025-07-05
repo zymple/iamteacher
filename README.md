@@ -6,7 +6,7 @@ iAmTeacher (pronounced I am teacher) is an AI-powered English tutor app for stud
 The vocal conversation parts will be working with OpenAI's Realtime API services. We'll give it a system prompt, and these will happen during the conversation:
 
 1. Student starts the conversation
-2. The frontend app will connect to the proxy via WebSocket and that will be passed through to OpenAI's transcriptions API.
+2. The frontend app will connect to the proxy via WebRTC and that will be passed through to OpenAI's transcriptions API.
 3. What the student said will be transcribed and be an input to the LLM.
 4. The output of the LLM will go into Text-to-Speech and played on the student's device.
 5. Repeat 3-4 until conversation goals accomplished and finished
@@ -18,19 +18,30 @@ The vocal conversation parts will be working with OpenAI's Realtime API services
 
 ## Setting up for local development
 
-1. Get an OpenAI API key
-2. Clone this repo
-3. In App.jsx, change the websocket to `ws://localhost:3001`
-4. Install dependencies with `npm install`
-5. Clone the proxy repo to another folder
-6. In the cloned proxy repo, create a `.env` with `OPENAI_API_KEY=sk-...` (put your API key here)
-7. In the cloned proxy repo, install dependencies with `npm install`
-8. In the cloned proxy repo, run the server with `node server.js`
+Before you begin, you'll need an OpenAI API key - [create one in the dashboard here](https://platform.openai.com/settings/api-keys). Create a `.env` file from the example file and set your API key in there:
+
+```bash
+cp .env.example .env
+```
+
+Running this application locally requires [Node.js](https://nodejs.org/) to be installed. Install dependencies for the application with:
+
+```bash
+npm install
+```
+
+Start the application server with:
+
+```bash
+npm run dev
+```
+
+This should start the console application on [http://localhost:3000](http://localhost:3000).
 
 
 ## License
 
-- iAmTeacher Frontend/app is licensed under GPLv3 license. For the backend/server-side part, please see [iAmTeacher Proxy](https://github.com/OpenTech-Thailand/iamteacher-proxy).
+- iAmTeacher Frontend/app is licensed under GPLv3 license. 
 
 ## Special Thanks
 
