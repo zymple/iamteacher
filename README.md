@@ -41,8 +41,9 @@ This should start the console application on [http://localhost:3000](http://loca
 
 ## License
 
-- iAmTeacher Frontend/app is dual-licensed under the GPLv3 license and a bespoke license granted exclusively to Zymple. While the general public may use, modify, and distribute the software under the terms of the GPLv3, Zymple is additionally permitted to use, modify, and distribute the software under the terms of a separate, bespoke license as agreed between the copyright holder and Zymple.
-- Zymple is a business unit of Manima BKK Co., Ltd.
+- iAmTeacher Frontend/app is dual-licensed under the GPLv3 license and a bespoke license granted exclusively to Zymple. While the general public may use, modify, and distribute the software under the terms of the GPLv3, Zymple is additionally permitted to use, modify, and distribute the software under the terms of a separate, bespoke license at Zymple's discretion.
+
+Zymple is a business unit of Manima BKK Co., Ltd.
 
 ## Special Thanks
 
