@@ -18,12 +18,21 @@ The vocal conversation parts will be working with OpenAI's Realtime API services
 - The possibility of tailoring contents according to student's skill level and learning goals
 - The possibility of using an alternative voice recognition, LLM and TTS platforms.
 
-## Setting up for local development
+## Usage
 
-Before you begin, you'll need an OpenAI API key - [create one in the dashboard here](https://platform.openai.com/settings/api-keys). Create a `.env` file from the example file and set your API key in there:
+_Before you begin, you'll need an OpenAI API key - [create one in the dashboard here](https://platform.openai.com/settings/api-keys)._
+
+Clone this repo
+
+```
+git clone https://github.com/zymple/iamteacher.git
+cd iamteacher
+```
+
+Create a `.env` file from the example file and set your API key in there:
 
 ```bash
-.env
+OPENAI_API_KEY=<your_openai_api_key>
 ```
 
 Running this application locally requires [Node.js](https://nodejs.org/) to be installed. Install dependencies for the application with:
@@ -35,10 +44,10 @@ npm install
 Start the application server with:
 
 ```bash
-npm run dev
+npm start
 ```
 
-This should start the console application on [http://localhost:3000](http://localhost:3000).
+This should start the application on [http://localhost:3000](http://localhost:3000).
 
 
 ## License
