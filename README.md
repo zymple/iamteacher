@@ -16,7 +16,7 @@ The vocal conversation parts will be working with OpenAI's Realtime API services
 
 - Multiple tuition/teaching styles to choose from
 - The possibility of tailoring contents according to student's skill level and learning goals
-- The possibility of using an alternative voice recognition, LLM and TTS platforms.
+- The possibility of using alternative voice recognition, LLM and TTS platforms.
 
 ## Usage
 
