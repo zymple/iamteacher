@@ -47,6 +47,8 @@ Start the application server with:
 npm start
 ```
 
+The default username is ``demo`` and the password is ``demopassword``
+
 This should start the application on [http://localhost:3000](http://localhost:3000).
 
 

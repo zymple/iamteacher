@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import logo from "/assets/openai-logomark.svg";
-import EventLog from "./EventLog";
-import SessionControls from "./SessionControls";
-import ToolPanel from "./ToolPanel";
 import '../App.css';
 
 export default function App() {
+  const [username, setUsername] = useState('');
   const [transcript, setTranscript] = useState('');
   const [aiReply, setAiReply] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -15,6 +13,29 @@ export default function App() {
   const peerConnection = useRef(null);
   const audioElement = useRef(null);
 
+  // Fetch logged-in username
+  useEffect(() => {
+    fetch("/api/me")
+      .then(res => {
+        if (res.status === 401) {
+          window.location.href = "/login";
+        } else {
+          return res.json();
+        }
+      })
+      .then(data => {
+        setUsername(data?.username);
+      })
+      .catch(err => {
+        console.error("Failed to load user info", err);
+      });
+  }, []);
+
+  async function logout() {
+    await fetch("/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
   async function startSession() {
     try {
       const tokenResponse = await fetch("/token");
@@ -23,7 +44,7 @@ export default function App() {
 
       const pc = new RTCPeerConnection();
 
-      // Create remote audio output
+      // Remote audio
       audioElement.current = document.createElement("audio");
       audioElement.current.autoplay = true;
       pc.ontrack = (e) => (audioElement.current.srcObject = e.streams[0]);
@@ -65,15 +86,11 @@ export default function App() {
   }
 
   function stopSession() {
-    if (dataChannel) {
-      dataChannel.close();
-    }
+    if (dataChannel) dataChannel.close();
 
     if (peerConnection.current) {
       peerConnection.current.getSenders().forEach((sender) => {
-        if (sender.track) {
-          sender.track.stop();
-        }
+        if (sender.track) sender.track.stop();
       });
       peerConnection.current.close();
     }
@@ -87,15 +104,13 @@ export default function App() {
     if (dataChannel) {
       const timestamp = new Date().toLocaleTimeString();
       message.event_id = message.event_id || crypto.randomUUID();
-
       dataChannel.send(JSON.stringify(message));
-
       if (!message.timestamp) {
         message.timestamp = timestamp;
       }
       setEvents((prev) => [message, ...prev]);
     } else {
-      console.error("Failed to send message - no data channel available", message);
+      console.error("No data channel available", message);
     }
   }
 
@@ -113,7 +128,6 @@ export default function App() {
         ],
       },
     };
-
     sendClientEvent(event);
     sendClientEvent({ type: "response.create" });
   }
@@ -122,28 +136,27 @@ export default function App() {
     if (dataChannel) {
       dataChannel.addEventListener("message", (e) => {
         const event = JSON.parse(e.data);
-
         if (!event.timestamp) {
           event.timestamp = new Date().toLocaleTimeString();
         }
 
-      // AI reply from response.done (transcript from audio reply)
-      if (
-        event.type === "response.done" &&
-        event.response?.output?.length > 0
-      ) {
-        for (const item of event.response.output) {
-          // clear previous AI reply
-          setAiReply('');
+        // AI reply from response.done (transcript from audio reply)
+        if (
+          event.type === "response.done" &&
+          event.response?.output?.length > 0
+        ) {
+          for (const item of event.response.output) {
+            // clear previous AI reply
+            setAiReply('');
 
-          const audioContent = item.content?.find(
-            (c) => c.type === "audio" && c.transcript
-          );
-          if (audioContent) {
-            setAiReply((prev) => `${prev} ${audioContent.transcript}`);
+            const audioContent = item.content?.find(
+              (c) => c.type === "audio" && c.transcript
+            );
+            if (audioContent) {
+              setAiReply((prev) => `${prev} ${audioContent.transcript}`);
+            }
           }
         }
-      }
 
         setEvents((prev) => [event, ...prev]);
       });
@@ -163,6 +176,13 @@ export default function App() {
         <strong>AI English Tutor - Yesterday's movie</strong>
       </div>
 
+    <div style={{ position: "absolute", top: "10px", right: "10px", textAlign: "right" }}>
+  {username && (
+    <>
+      <div>Welcome, <strong>{username}</strong> <button onClick={logout} className="control-button logout">Logout</button></div>
+    </>
+  )}
+</div>
       <div className="scene-wrapper">
         <img
           src="/assets/tutor_f.png"
