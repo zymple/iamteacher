@@ -1,5 +1,3 @@
-// server.js
-
 import express from "express";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
