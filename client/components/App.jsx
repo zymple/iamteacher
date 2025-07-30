@@ -1,19 +1,78 @@
 import { useEffect, useRef, useState } from "react";
 import logo from "/assets/openai-logomark.svg";
-import EventLog from "./EventLog";
-import SessionControls from "./SessionControls";
-import ToolPanel from "./ToolPanel";
-import '../App.css';
+import "../App.css";
 
 export default function App() {
-  const [transcript, setTranscript] = useState('');
-  const [aiReply, setAiReply] = useState('');
+  const [username, setUsername] = useState("");
+  const [aiReply, setAiReply] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [events, setEvents] = useState([]);
   const [dataChannel, setDataChannel] = useState(null);
+  const [webrtcLatency, setWebrtcLatency] = useState(null); // Renamed for clarity
+  const [openaiApiLatency, setOpenaiApiLatency] = useState(null);
+  const [backendApiLatency, setBackendApiLatency] = useState(null);
+  const [callDuration, setCallDuration] = useState(0);
+  const callTimer = useRef(null);
+
   const peerConnection = useRef(null);
   const audioElement = useRef(null);
+
+  // Define BASE_URL, assuming it's available in your .env or similar
+  const BASE_URL = "https://iamteacher-fossasia-demo.techtransthai.org";
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => {
+        if (res.status === 401) {
+          window.location.href = "/login";
+        } else {
+          return res.json();
+        }
+      })
+      .then((data) => {
+        setUsername(data?.username);
+      })
+      .catch((err) => {
+        console.error("Failed to load user info", err);
+      });
+  }, []);
+
+  // Function to measure latency using fetch
+  const measureFetchLatency = async (url, setLatencyState) => {
+    try {
+      const start = Date.now();
+      await fetch(url, { method: 'GET', mode: 'no-cors' }); // Using HEAD and no-cors for efficiency
+      const end = Date.now();
+      setLatencyState(end - start);
+    } catch (error) {
+      console.error(`Failed to measure latency for ${url}:`, error);
+      setLatencyState(null); // Indicate failure
+    }
+  };
+
+  useEffect(() => {
+    // Ping backend API every 5 seconds
+    const backendPingInterval = setInterval(() => {
+      measureFetchLatency(`${BASE_URL}`, setBackendApiLatency);
+    }, 5000);
+
+    // Ping OpenAI API every 5 seconds (using a small, public endpoint)
+    const openaiPingInterval = setInterval(() => {
+      measureFetchLatency("https://api.openai.com", setOpenaiApiLatency);
+    }, 5000);
+
+    return () => {
+      clearInterval(backendPingInterval);
+      clearInterval(openaiPingInterval);
+    };
+  }, [BASE_URL]);
+
+
+  async function logout() {
+    await fetch("/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
 
   async function startSession() {
     try {
@@ -23,7 +82,6 @@ export default function App() {
 
       const pc = new RTCPeerConnection();
 
-      // Create remote audio output
       audioElement.current = document.createElement("audio");
       audioElement.current.autoplay = true;
       pc.ontrack = (e) => (audioElement.current.srcObject = e.streams[0]);
@@ -65,77 +123,56 @@ export default function App() {
   }
 
   function stopSession() {
-    if (dataChannel) {
-      dataChannel.close();
-    }
+    if (dataChannel) dataChannel.close();
 
     if (peerConnection.current) {
       peerConnection.current.getSenders().forEach((sender) => {
-        if (sender.track) {
-          sender.track.stop();
-        }
+        if (sender.track) sender.track.stop();
       });
       peerConnection.current.close();
     }
 
     setIsSessionActive(false);
+    setIsRecording(false);
     setDataChannel(null);
     peerConnection.current = null;
+    clearInterval(callTimer.current);
+    setCallDuration(0);
+    setWebrtcLatency(null); // Reset WebRTC latency
   }
 
   function sendClientEvent(message) {
     if (dataChannel) {
       const timestamp = new Date().toLocaleTimeString();
       message.event_id = message.event_id || crypto.randomUUID();
-
       dataChannel.send(JSON.stringify(message));
-
       if (!message.timestamp) {
         message.timestamp = timestamp;
       }
       setEvents((prev) => [message, ...prev]);
     } else {
-      console.error("Failed to send message - no data channel available", message);
+      console.error("No data channel available", message);
     }
   }
 
-  function sendTextMessage(message) {
-    const event = {
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: message,
-          },
-        ],
-      },
-    };
-
-    sendClientEvent(event);
-    sendClientEvent({ type: "response.create" });
-  }
-
   useEffect(() => {
-    if (dataChannel) {
-      dataChannel.addEventListener("message", (e) => {
-        const event = JSON.parse(e.data);
+    if (!dataChannel) return;
 
-        if (!event.timestamp) {
-          event.timestamp = new Date().toLocaleTimeString();
-        }
+    const handleMessage = (e) => {
+      const event = JSON.parse(e.data);
+      if (!event.timestamp) event.timestamp = new Date().toLocaleTimeString();
 
-      // AI reply from response.done (transcript from audio reply)
+      if (event.type === "pong" && event.pingTimestamp) {
+        const ping = Date.now() - event.pingTimestamp;
+        setWebrtcLatency(ping); // Use the new state variable
+      }
+
       if (
         event.type === "response.done" &&
         event.response?.output?.length > 0
       ) {
+        setAiReply("");
         for (const item of event.response.output) {
-          // clear previous AI reply
-          setAiReply('');
-
           const audioContent = item.content?.find(
             (c) => c.type === "audio" && c.transcript
           );
@@ -145,17 +182,58 @@ export default function App() {
         }
       }
 
-        setEvents((prev) => [event, ...prev]);
-      });
+      setEvents((prev) => [event, ...prev]);
+    };
 
-      dataChannel.addEventListener("open", () => {
-        setIsSessionActive(true);
-        setTranscript('');
-        setAiReply('');
-        setEvents([]);
-      });
-    }
+    const handleOpen = () => {
+      setIsSessionActive(true);
+      setAiReply("");
+      setEvents([]);
+      setIsRecording(true);
+
+      callTimer.current = setInterval(() => {
+        setCallDuration((prev) => prev + 1);
+      }, 1000);
+    };
+
+    const handleClose = () => {
+      console.warn("Data channel closed, trying to reconnect...");
+      stopSession();
+      setTimeout(() => startSession(), 3000);
+    };
+
+    const handleError = (e) => {
+      console.error("Data channel error:", e);
+      stopSession();
+      setTimeout(() => startSession(), 3000);
+    };
+
+    dataChannel.addEventListener("message", handleMessage);
+    dataChannel.addEventListener("open", handleOpen);
+    dataChannel.addEventListener("close", handleClose);
+    dataChannel.addEventListener("error", handleError);
+
+    const pingInterval = setInterval(() => {
+      if (dataChannel.readyState === "open") {
+        dataChannel.send(JSON.stringify({ type: "ping", pingTimestamp: Date.now() }));
+      }
+    }, 5000);
+
+    return () => {
+      dataChannel.removeEventListener("message", handleMessage);
+      dataChannel.removeEventListener("open", handleOpen);
+      dataChannel.removeEventListener("close", handleClose);
+      dataChannel.removeEventListener("error", handleError);
+      clearInterval(pingInterval);
+      clearInterval(callTimer.current);
+    };
   }, [dataChannel]);
+
+  const formatDuration = (seconds) => {
+    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   return (
     <div className="app-container">
@@ -163,12 +241,19 @@ export default function App() {
         <strong>AI English Tutor - Yesterday's movie</strong>
       </div>
 
+      <div style={{ position: "absolute", top: "10px", right: "10px", textAlign: "right" }}>
+        {username && (
+          <>
+            <div>
+              Welcome, <strong>{username}</strong>{" "}
+              <button onClick={logout} className="control-button logout">Logout</button>
+            </div>
+          </>
+        )}
+      </div>
+
       <div className="scene-wrapper">
-        <img
-          src="/assets/tutor_f.png"
-          alt="Tutor Avatar"
-          className="avatar"
-        />
+        <img src="/assets/tutor_f.png" alt="Tutor Avatar" className="avatar" />
 
         <div className="dialogue-box">
           <div className="dialogue-text">
@@ -181,16 +266,72 @@ export default function App() {
             onClick={async () => {
               if (isSessionActive) {
                 stopSession();
-                setIsRecording(false);
               } else {
                 await startSession();
-                setIsRecording(true);
               }
             }}
             className={`control-button ${isRecording ? "recording" : "idle"}`}
           >
             {isRecording ? "วางสาย" : "เริ่มการโทร"}
           </button>
+        </div>
+
+        {/* Status Display */}
+        <div style={{ marginTop: 10, textAlign: "center" }}>
+          {isSessionActive && (
+            <>
+              <div>📞 Duration: {formatDuration(callDuration)}</div>
+              {webrtcLatency !== null && (
+                <div
+                  style={{
+                    marginTop: "0.5rem",
+                    color:
+                      webrtcLatency < 150
+                        ? "green"
+                        : webrtcLatency < 300
+                        ? "orange"
+                        : "red",
+                    fontWeight: 500,
+                  }}
+                >
+                  ⏱️ WebRTC Latency: {webrtcLatency} ms
+                </div>
+              )}
+            </>
+          )}
+          {/* Display general API latencies */}
+          {openaiApiLatency !== null && (
+            <div
+              style={{
+                marginTop: "0.5rem",
+                color:
+                  openaiApiLatency < 300
+                    ? "green"
+                    : openaiApiLatency < 600
+                    ? "orange"
+                    : "red",
+                fontWeight: 500,
+              }}
+            >
+              🌐 OpenAI: {openaiApiLatency} ms
+            </div>
+          )}
+          {backendApiLatency !== null && (
+            <div
+              style={{
+                marginTop: "0.5rem",
+                color:
+                  backendApiLatency < 150
+                    ? "green"
+                    : backendApiLatency < 300
+                    ? "orange"
+                    : "red",
+                fontWeight: 500,
+              }}
+            >
+              🏠 TechTransThai: {backendApiLatency} ms
+            </div>
+          )}
         </div>
       </div>
     </div>
