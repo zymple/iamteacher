@@ -36,10 +36,9 @@ app.use(vite.middlewares);
 // Middleware: protect all routes (except public)
 app.use((req, res, next) => {
   const token = req.cookies["auth-token"];
-  const publicPaths = ["/login", "/register"];
+  const publicPaths = ["/login", "/register", "/email"];
   const isPublic =
     publicPaths.some((path) => req.path.startsWith(path)) ||
-    req.path.startsWith("/uploads") ||
     req.method === "OPTIONS" ||
     req.path.endsWith(".js") || req.path.endsWith(".css") || req.path.endsWith(".map");
 

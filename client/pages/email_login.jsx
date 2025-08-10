@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import '../App.css';
 import '../Login.css';
 
-function Login() {
+function EmailLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -34,12 +34,13 @@ function Login() {
 
   return (
     <div className="app-container">
-      <div className="page-title">
-        <strong>Authentication</strong>
+      <img src="/assets/iamteacher.svg" alt="Tutor Avatar" className="avatar" />
+      <div className="text-container">
+        <p className="tutor-name">AI English Tutor</p>
+        <p className="tutor-description">Improve your English while still having fun!</p>
       </div>
 
       <form className="login-form" onSubmit={handleLogin}>
-        {error && <p style={{ color: "red" }}>{error}</p>}
         <label htmlFor="username">Username</label>
         <input
           id="username"
@@ -61,7 +62,9 @@ function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-
+        {error && 
+        <p style={{ color: "red", fontSize: "12pt" }}>{error}</p>
+        }
         <div className="button-container">
           <button className="control-button idle" type="submit">
             Login
@@ -72,4 +75,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default EmailLogin;

@@ -5,6 +5,7 @@ import App from "./components/App";
 import Login from "./pages/login";
 import "./base.css";
 import Register from "./pages/register";
+import EmailLogin from "./pages/email_login";
 
 const container = document.getElementById("root");
 
@@ -19,6 +20,7 @@ createRoot(container).render(
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/email" element={<EmailLogin />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
