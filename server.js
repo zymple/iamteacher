@@ -5,8 +5,6 @@ import "dotenv/config";
 import fetch from "node-fetch"; // Add if Node <18
 
 import OpenAI from "openai";
-import path from "path";
-import multer from "multer";
 import fsPromises from "fs/promises";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
@@ -21,24 +19,6 @@ const openai = new OpenAI({ apiKey });
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// Create folders
-const uploadsDir = path.join(process.cwd(), "uploads");
-const ttsDir = path.join(process.cwd(), "tts");
-[uploadsDir, ttsDir].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
-
-// Multer for audio uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, file.fieldname + "-" + Date.now() + ".wav"),
-});
-const upload = multer({ storage });
-
-app.use("/tts", express.static("tts"));
 
 // System prompt (Thai English teacher role)
 const systemPrompt = `
@@ -177,81 +157,6 @@ app.get("/token", async (req, res) => {
   } catch (error) {
     console.error("Token generation error:", error);
     res.status(500).json({ error: "Failed to generate token", details: error.message });
-  }
-});
-
-// POST /ai-tutor: process uploaded audio and respond
-app.post("/ai-tutor", upload.single("audio"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No audio file uploaded" });
-
-  const filePath = req.file.path;
-  const mimetype = "audio/wav";
-  let transcript = "";
-  let reply = "";
-  let ttsUrl = "";
-
-  console.log("Received file:", {
-    originalname: req.file.originalname,
-    mimetype,
-    path: filePath,
-    size: req.file.size,
-  });
-
-  try {
-    // 1. Transcribe audio
-    const transcription = await openai.audio.transcriptions.create({
-      file: fs.createReadStream(filePath),
-      model: "whisper-1",
-      language: "en",
-      response_format: "text",
-    });
-    transcript = transcription.text || "(no speech detected)";
-
-    // 2. Chat completion
-    const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: transcript },
-      ],
-      max_tokens: 150,
-      temperature: 0.7,
-    });
-    reply = chatCompletion.choices[0]?.message?.content || "(no response)";
-
-    // 3. Generate TTS
-    if (reply && reply !== "(no response)") {
-      const ttsFilename = `tts-${Date.now()}.wav`;
-      const ttsPath = path.join(ttsDir, ttsFilename);
-
-      const ttsResponse = await openai.audio.speech.create({
-        model: "tts-1",
-        voice: "nova",
-        input: reply,
-        response_format: "wav",
-        speed: 0.9,
-      });
-
-      const buffer = Buffer.from(await ttsResponse.arrayBuffer());
-      await fsPromises.writeFile(ttsPath, buffer);
-      ttsUrl = `/tts/${ttsFilename}`;
-    }
-
-    res.json({ success: true, transcript, reply, ttsUrl });
-  } catch (error) {
-    console.error("AI Tutor Error:", error);
-    res.status(500).json({
-      success: false,
-      error: "AI processing failed",
-      details: error.message,
-    });
-  } finally {
-    // Clean uploaded file
-    try {
-      await fsPromises.unlink(filePath);
-    } catch (e) {
-      console.error("File cleanup error:", e);
-    }
   }
 });
 
