@@ -29,10 +29,12 @@ git clone https://github.com/zymple/iamteacher.git
 cd iamteacher
 ```
 
-Create a `.env` file from the example file and set your API key in there:
+Create a `.env` file from the example file and set your API key in there (or check .env.example):
 
 ```bash
 OPENAI_API_KEY=<your_openai_api_key>
+DEBUG=<True OR False>
+VITE_ALLOWED_HOSTS=localhost,127.0.0.1 // Example
 ```
 
 Running this application locally requires [Node.js](https://nodejs.org/) to be installed. Install dependencies for the application with:
@@ -47,7 +49,7 @@ Start the application server with:
 npm start
 ```
 
-The default username is ``demo`` and the password is ``demopassword``
+The default email is ``demo@demo.com`` and the password is ``demopassword``
 
 This should start the application on [http://localhost:3000](http://localhost:3000).
 

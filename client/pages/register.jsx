@@ -11,12 +11,12 @@ function Login() {
         </div>
 
         <form className="login-form">
-          <label htmlFor="username">Username</label>
+          <label htmlFor="email">email</label>
           <input
-            id="username"
+            id="email"
             type="text"
-            placeholder="Enter your username"
-            autoComplete="username"
+            placeholder="Enter your email"
+            autoComplete="email"
             required="true"
           />
           <label htmlFor="email">Email</label>
