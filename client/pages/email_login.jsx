@@ -36,7 +36,7 @@ function EmailLogin() {
     <div className="app-container">
       <img src="/assets/iamteacher.svg" alt="Tutor Avatar" className="avatar" />
       <div className="text-container">
-        <p className="tutor-name">AI English Tutor</p>
+        <p className="tutor-name">iAmTeacher</p>
         <p className="tutor-description">Improve your English while still having fun!</p>
       </div>
 
