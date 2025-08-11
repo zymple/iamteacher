@@ -7,4 +7,7 @@ const path = fileURLToPath(import.meta.url);
 export default {
   root: join(dirname(path), "client"),
   plugins: [react()],
+  server: {
+    allowedHosts: ["iamteacher.techtransthai.org"]
+  }
 };
