@@ -3,7 +3,7 @@ import '../App.css';
 import '../Login.css';
 
 function EmailLogin() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -17,7 +17,7 @@ function EmailLogin() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (res.ok) {
@@ -41,15 +41,15 @@ function EmailLogin() {
       </div>
 
       <form className="login-form" onSubmit={handleLogin}>
-        <label htmlFor="username">Username</label>
+        <label htmlFor="email">Email</label>
         <input
-          id="username"
+          id="email"
           type="text"
-          placeholder="Enter your username"
-          autoComplete="username"
+          placeholder="Enter your email"
+          autoComplete="email"
           required
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <label htmlFor="password">Password</label>
