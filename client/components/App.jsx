@@ -3,7 +3,7 @@ import logo from "/assets/openai-logomark.svg";
 import "../App.css";
 
 export default function App() {
-  const [username, setUsername] = useState("");
+  const [email, setemail] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [isSessionActive, setIsSessionActive] = useState(false);
@@ -31,7 +31,7 @@ export default function App() {
         }
       })
       .then((data) => {
-        setUsername(data?.username);
+        setemail(data?.email);
       })
       .catch((err) => {
         console.error("Failed to load user info", err);
@@ -238,14 +238,14 @@ export default function App() {
   return (
     <div className="app-container">
       <div className="page-title">
-        <strong>AI English Tutor - Yesterday's movie</strong>
+        <strong>iAmTeacher - Yesterday's movie</strong>
       </div>
 
       <div style={{ position: "absolute", top: "10px", right: "10px", textAlign: "right" }}>
-        {username && (
+        {email && (
           <>
             <div>
-              Welcome, <strong>{username}</strong>{" "}
+              Welcome, <strong>{email}</strong>{" "}
               <button onClick={logout} className="control-button logout">Logout</button>
             </div>
           </>

@@ -3,7 +3,6 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import "dotenv/config";
 import fetch from "node-fetch"; // Add if Node <18
-
 import OpenAI from "openai";
 import fsPromises from "fs/promises";
 import cookieParser from "cookie-parser";
@@ -13,12 +12,20 @@ import crypto from "crypto";
 const app = express();
 const port = process.env.PORT || 3000;
 const apiKey = process.env.OPENAI_API_KEY;
+const DEBUG = process.env.DEBUG?.toLowerCase() === "true";
 
 const openai = new OpenAI({ apiKey });
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+// Create session-token.txt if it doesn't exist
+const sessionFile = "session-token.txt";
+if (!fs.existsSync(sessionFile)) {
+  fs.writeFileSync(sessionFile, "");
+  if (DEBUG) console.log(`📄 Created ${sessionFile}`);
+}
 
 // System prompt (Thai English teacher role)
 const systemPrompt = `
@@ -49,7 +56,7 @@ app.use((req, res, next) => {
 
 // POST /login: handle login + set cookie
 app.post("/login", async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
   try {
     const userData = await fsPromises.readFile("./user.txt", "utf-8");
@@ -58,23 +65,49 @@ app.post("/login", async (req, res) => {
       .filter(Boolean)
       .map(line => {
         const [u, hash] = line.trim().split(":");
-        return { username: u, hash };
+        return { email: u, hash };
       });
 
-    const user = users.find(u => u.username === username);
-    if (!user) return res.status(401).send("Invalid username or password");
+    if (DEBUG) {
+      console.log("=== STORED USERS ===");
+      users.forEach((u, idx) => {
+        console.log(`[${idx}] email: "${u.email}", hash: "${u.hash}"`);
+      });
 
-    const match = await bcrypt.compare(password, user.hash.replace('$2y$', '$2b$'));
-    console.log(match); // should be true
-    if (!match) return res.status(401).send("Invalid username or password");
+      if (DEBUG) {
+      console.log("====================");
 
-    // Token generation
+      console.log("Login attempt:");
+      console.log("  Received email:", email);
+      console.log("  Received password (raw):", password);
+    }
+  }
+
+    const user = users.find(u => u.email === email);
+    if (!user) {
+      if (DEBUG) console.log("❌ No matching email found.");
+      return res.status(401).send("Invalid email or password");
+    }
+
+    if (DEBUG) console.log(`  Stored hash for "${email}": ${user.hash}`);
+
+    const match = await bcrypt.compare(
+      password,
+      user.hash.replace('$2y$', '$2b$')
+    );
+
+    if (DEBUG) console.log(`Password match result: ${match}`);
+
+    if (!match) {
+      if (DEBUG) console.log("❌ Password incorrect.");
+      return res.status(401).send("Invalid email or password");
+    }
+
     const token = crypto.randomBytes(32).toString("hex");
+    if (DEBUG) console.log(`✅ Login successful for "${email}". Generated token: ${token}`);
 
-    // Store session
-    await fsPromises.appendFile("session-token.txt", `${token}:${username}\n`);
+    await fsPromises.appendFile(sessionFile, `${token}:${email}\n`);
 
-    // Set cookie
     res.cookie("auth-token", token, {
       httpOnly: true,
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -87,17 +120,18 @@ app.post("/login", async (req, res) => {
     res.status(500).send("Internal server error");
   }
 });
-// Place this middleware before any routes that use `req.user`
+
+// Session restore middleware
 app.use(async (req, res, next) => {
   const token = req.cookies["auth-token"];
   if (!token) return next();
 
   try {
-    const sessions = await fsPromises.readFile("session-token.txt", "utf-8");
+    const sessions = await fsPromises.readFile(sessionFile, "utf-8");
     const line = sessions.split("\n").find(l => l.startsWith(token + ":"));
     if (line) {
-      const [, username] = line.trim().split(":");
-      req.user = username;
+      const [, email] = line.trim().split(":");
+      req.user = email;
     }
   } catch (err) {
     console.error("Session read error:", err);
@@ -105,21 +139,22 @@ app.use(async (req, res, next) => {
 
   next();
 });
+
 app.get("/api/me", (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
-  res.json({ username: req.user });
+  res.json({ email: req.user });
 });
 
 app.post("/logout", async (req, res) => {
   const token = req.cookies["auth-token"];
   if (token) {
     try {
-      const data = await fsPromises.readFile("session-token.txt", "utf-8");
+      const data = await fsPromises.readFile(sessionFile, "utf-8");
       const filtered = data
         .split("\n")
         .filter((line) => !line.startsWith(token + ":"))
         .join("\n");
-      await fsPromises.writeFile("session-token.txt", filtered);
+      await fsPromises.writeFile(sessionFile, filtered);
     } catch (e) {
       console.error("Logout error:", e);
     }
@@ -128,7 +163,6 @@ app.post("/logout", async (req, res) => {
   res.clearCookie("auth-token");
   res.redirect("/login");
 });
-
 
 // GET /token: create OpenAI Realtime session
 app.get("/token", async (req, res) => {
