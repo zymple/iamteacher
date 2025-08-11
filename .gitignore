@@ -27,3 +27,6 @@ dist-ssr
 # temp
 tts/
 uploads/
+
+# auth
+session-token.txt

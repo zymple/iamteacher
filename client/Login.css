@@ -111,3 +111,31 @@ body {
   color: #334155;
   margin-bottom: 0.25rem;
 }
+
+@media (max-width: 600px) {
+  .login-form {
+    padding: 1rem;
+    max-width: 98vw;
+  }
+
+  .login-form input[type="text"],
+  .login-form input[type="password"] {
+    font-size: 12pt;
+    padding: 0.4rem 0.7rem;
+  }
+
+  .tutor-name {
+    font-size: 18pt;
+  }
+
+  .tutor-description {
+    font-size: 12pt;
+  }
+
+  .control-button {
+    font-size: 12pt;
+    width: 90vw;
+    height: 1.8cm;
+    padding: 0.4rem 0.5rem;
+  }
+}
