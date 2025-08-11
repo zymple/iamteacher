@@ -5,8 +5,14 @@ import App from "./components/App";
 import Login from "./pages/login";
 import "./base.css";
 import Register from "./pages/register";
+import EmailLogin from "./pages/email_login";
 
 const container = document.getElementById("root");
+
+// note, to add new endpoint. you need to edit entry-server.jsx and entry-client.jsx
+// if you want the path to be public, go edit server.js at line 39
+// const publicPaths = ["/login", "/register", "/newendpoint"];
+
 createRoot(container).render(
   <StrictMode>
     <BrowserRouter>
@@ -14,6 +20,7 @@ createRoot(container).render(
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/email" element={<EmailLogin />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,
