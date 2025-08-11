@@ -34,7 +34,7 @@ Create a `.env` file from the example file and set your API key in there (or che
 ```bash
 OPENAI_API_KEY=<your_openai_api_key>
 DEBUG=<True OR False>
-allowedHosts=localhost,127.0.0.1 // Example
+VITE_ALLOWED_HOSTS=localhost,127.0.0.1 // Example
 ```
 
 Running this application locally requires [Node.js](https://nodejs.org/) to be installed. Install dependencies for the application with:
