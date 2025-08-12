@@ -37,17 +37,16 @@ export default function Conversation() {
         </div>
         <div className="status-group">
           <div className="status-item">
-            <div className="status-label">
-              <svg className="svg status" width="1.2cm" height="1.2cm" viewBox="0 0 24 24" fill="none">
-                <path d="M12 7V12L14.5 10.5M21 12C21 16.9706..." stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+            <div className="status-item">
+              <svg className="svg status" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M528 320C528 434.9 434.9 528 320 528C205.1 528 112 434.9 112 320C112 205.1 205.1 112 320 112C434.9 112 528 205.1 528 320zM64 320C64 461.4 178.6 576 320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z"/></svg>
               <span className="status-span">Total time</span>
+              <span className="status-value">3h 40m</span>
             </div>
-            <span className="status-value">7h 27m</span>
-          </div>
-          <div className="status-item">
-            <span className="status-span">New words</span>
-            <span className="status-value">3,727</span>
+            <div className="status-item">
+              <svg className="svg status" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M528 320C528 434.9 434.9 528 320 528C205.1 528 112 434.9 112 320C112 205.1 205.1 112 320 112C434.9 112 528 205.1 528 320zM64 320C64 461.4 178.6 576 320 576C461.4 576 576 461.4 576 320C576 178.6 461.4 64 320 64C178.6 64 64 178.6 64 320zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z"/></svg>
+              <span className="status-span">New words</span>
+              <span className="status-value">3,780</span>
+            </div>
           </div>
         </div>
         <div className="lesson-container">
