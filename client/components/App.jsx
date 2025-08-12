@@ -1,25 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import logo from "/assets/openai-logomark.svg";
 import "../App.css";
+import "../Home.css";
 
-export default function App() {
+export default function Conversation() {
   const [email, setemail] = useState("");
-  const [aiReply, setAiReply] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [dataChannel, setDataChannel] = useState(null);
-  const [webrtcLatency, setWebrtcLatency] = useState(null); // Renamed for clarity
-  const [openaiApiLatency, setOpenaiApiLatency] = useState(null);
-  const [backendApiLatency, setBackendApiLatency] = useState(null);
-  const [callDuration, setCallDuration] = useState(0);
-  const callTimer = useRef(null);
-
-  const peerConnection = useRef(null);
-  const audioElement = useRef(null);
-
-  // Define BASE_URL, assuming it's available in your .env or similar
-  const BASE_URL = "https://iamteacher-fossasia-demo.techtransthai.org";
 
   useEffect(() => {
     fetch("/api/me")
@@ -37,301 +21,63 @@ export default function App() {
         console.error("Failed to load user info", err);
       });
   }, []);
-
-  // Function to measure latency using fetch
-  const measureFetchLatency = async (url, setLatencyState) => {
-    try {
-      const start = Date.now();
-      await fetch(url, { method: 'GET', mode: 'no-cors' }); // Using HEAD and no-cors for efficiency
-      const end = Date.now();
-      setLatencyState(end - start);
-    } catch (error) {
-      console.error(`Failed to measure latency for ${url}:`, error);
-      setLatencyState(null); // Indicate failure
-    }
-  };
-
-  useEffect(() => {
-    // Ping backend API every 5 seconds
-    const backendPingInterval = setInterval(() => {
-      measureFetchLatency(`${BASE_URL}`, setBackendApiLatency);
-    }, 5000);
-
-    // Ping OpenAI API every 5 seconds (using a small, public endpoint)
-    const openaiPingInterval = setInterval(() => {
-      measureFetchLatency("https://api.openai.com", setOpenaiApiLatency);
-    }, 5000);
-
-    return () => {
-      clearInterval(backendPingInterval);
-      clearInterval(openaiPingInterval);
-    };
-  }, [BASE_URL]);
-
-
-  async function logout() {
-    await fetch("/logout", { method: "POST" });
-    window.location.href = "/login";
-  }
-
-  async function startSession() {
-    try {
-      const tokenResponse = await fetch("/token");
-      const data = await tokenResponse.json();
-      const EPHEMERAL_KEY = data.client_secret.value;
-
-      const pc = new RTCPeerConnection();
-
-      audioElement.current = document.createElement("audio");
-      audioElement.current.autoplay = true;
-      pc.ontrack = (e) => (audioElement.current.srcObject = e.streams[0]);
-
-      const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-      pc.addTrack(ms.getTracks()[0]);
-
-      const dc = pc.createDataChannel("oai-events");
-      setDataChannel(dc);
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      const baseUrl = "https://api.openai.com/v1/realtime";
-      const model = "gpt-4o-realtime-preview-2024-12-17";
-      const systemPrompt = encodeURIComponent(
-        "You are a friendly, encouraging English tutor for young children (EFL learners). Speak naturally and clearly, using short sentences. Pause after each sentence so the student can respond. Focus today's lesson on talking about a movie the student watched yesterday. Start by greeting them in English and inviting them to learn."
-      );
-
-      const sdpResponse = await fetch(`${baseUrl}?model=${model}&input=${systemPrompt}`, {
-        method: "POST",
-        body: offer.sdp,
-        headers: {
-          Authorization: `Bearer ${EPHEMERAL_KEY}`,
-          "Content-Type": "application/sdp",
-        },
-      });
-
-      const answer = {
-        type: "answer",
-        sdp: await sdpResponse.text(),
-      };
-      await pc.setRemoteDescription(answer);
-
-      peerConnection.current = pc;
-    } catch (error) {
-      console.error("Error starting session:", error);
-    }
-  }
-
-  function stopSession() {
-    if (dataChannel) dataChannel.close();
-
-    if (peerConnection.current) {
-      peerConnection.current.getSenders().forEach((sender) => {
-        if (sender.track) sender.track.stop();
-      });
-      peerConnection.current.close();
-    }
-
-    setIsSessionActive(false);
-    setIsRecording(false);
-    setDataChannel(null);
-    peerConnection.current = null;
-    clearInterval(callTimer.current);
-    setCallDuration(0);
-    setWebrtcLatency(null); // Reset WebRTC latency
-  }
-
-  function sendClientEvent(message) {
-    if (dataChannel) {
-      const timestamp = new Date().toLocaleTimeString();
-      message.event_id = message.event_id || crypto.randomUUID();
-      dataChannel.send(JSON.stringify(message));
-      if (!message.timestamp) {
-        message.timestamp = timestamp;
-      }
-      setEvents((prev) => [message, ...prev]);
-    } else {
-      console.error("No data channel available", message);
-    }
-  }
-
-  useEffect(() => {
-    if (!dataChannel) return;
-
-    const handleMessage = (e) => {
-      const event = JSON.parse(e.data);
-      if (!event.timestamp) event.timestamp = new Date().toLocaleTimeString();
-
-      if (event.type === "pong" && event.pingTimestamp) {
-        const ping = Date.now() - event.pingTimestamp;
-        setWebrtcLatency(ping); // Use the new state variable
-      }
-
-      if (
-        event.type === "response.done" &&
-        event.response?.output?.length > 0
-      ) {
-        setAiReply("");
-        for (const item of event.response.output) {
-          const audioContent = item.content?.find(
-            (c) => c.type === "audio" && c.transcript
-          );
-          if (audioContent) {
-            setAiReply((prev) => `${prev} ${audioContent.transcript}`);
-          }
-        }
-      }
-
-      setEvents((prev) => [event, ...prev]);
-    };
-
-    const handleOpen = () => {
-      setIsSessionActive(true);
-      setAiReply("");
-      setEvents([]);
-      setIsRecording(true);
-
-      callTimer.current = setInterval(() => {
-        setCallDuration((prev) => prev + 1);
-      }, 1000);
-    };
-
-    const handleClose = () => {
-      console.warn("Data channel closed, trying to reconnect...");
-      stopSession();
-      setTimeout(() => startSession(), 3000);
-    };
-
-    const handleError = (e) => {
-      console.error("Data channel error:", e);
-      stopSession();
-      setTimeout(() => startSession(), 3000);
-    };
-
-    dataChannel.addEventListener("message", handleMessage);
-    dataChannel.addEventListener("open", handleOpen);
-    dataChannel.addEventListener("close", handleClose);
-    dataChannel.addEventListener("error", handleError);
-
-    const pingInterval = setInterval(() => {
-      if (dataChannel.readyState === "open") {
-        dataChannel.send(JSON.stringify({ type: "ping", pingTimestamp: Date.now() }));
-      }
-    }, 5000);
-
-    return () => {
-      dataChannel.removeEventListener("message", handleMessage);
-      dataChannel.removeEventListener("open", handleOpen);
-      dataChannel.removeEventListener("close", handleClose);
-      dataChannel.removeEventListener("error", handleError);
-      clearInterval(pingInterval);
-      clearInterval(callTimer.current);
-    };
-  }, [dataChannel]);
-
-  const formatDuration = (seconds) => {
-    const m = String(Math.floor(seconds / 60)).padStart(2, "0");
-    const s = String(seconds % 60).padStart(2, "0");
-    return `${m}:${s}`;
-  };
-
   return (
     <div className="app-container">
-      <div className="page-title">
-        <strong>iAmTeacher - Yesterday's movie</strong>
+      <div className="home-information-box">
+        <div className="text-container home">
+          <p className="main">Hi, demo</p>
+          <p className="alt">Ready to learn today?</p>
+        </div>
+        <img width="114" height="114" src="https://avatar.iran.liara.run/public/80" alt="User's Avatar" className="user-avatar" />
       </div>
 
-      <div style={{ position: "absolute", top: "10px", right: "10px", textAlign: "right" }}>
-        {email && (
-          <>
-            <div>
-              Welcome, <strong>{email}</strong>{" "}
-              <button onClick={logout} className="control-button logout">Logout</button>
+      <div className="status-box">
+        <div className="status-title">
+          <p className="status-title-text">Status</p>
+        </div>
+        <div className="status-group">
+          <div className="status-item">
+            <div className="status-label">
+              <svg className="svg status" width="1.2cm" height="1.2cm" viewBox="0 0 24 24" fill="none">
+                <path d="M12 7V12L14.5 10.5M21 12C21 16.9706..." stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="status-span">Total time</span>
             </div>
-          </>
-        )}
-      </div>
-
-      <div className="scene-wrapper">
-        <img src="/assets/tutor_f.png" alt="Tutor Avatar" className="avatar" />
-
-        <div className="dialogue-box">
-          <div className="dialogue-text">
-            <strong>ติวเตอร์:</strong> {aiReply || <em>กำลังรอคำถามของคุณ</em>}
+            <span className="status-value">7h 27m</span>
+          </div>
+          <div className="status-item">
+            <span className="status-span">New words</span>
+            <span className="status-value">3,727</span>
           </div>
         </div>
-
-        <div className="button-container">
-          <button
-            onClick={async () => {
-              if (isSessionActive) {
-                stopSession();
-              } else {
-                await startSession();
-              }
-            }}
-            className={`control-button ${isRecording ? "recording" : "idle"}`}
-          >
-            {isRecording ? "วางสาย" : "เริ่มการโทร"}
-          </button>
+        <div className="lesson-container">
+          <button className="control-button small">Start Lesson</button>
         </div>
+      </div>
 
-        {/* Status Display */}
-        <div style={{ marginTop: 10, textAlign: "center" }}>
-          {isSessionActive && (
-            <>
-              <div>📞 Duration: {formatDuration(callDuration)}</div>
-              {webrtcLatency !== null && (
-                <div
-                  style={{
-                    marginTop: "0.5rem",
-                    color:
-                      webrtcLatency < 150
-                        ? "green"
-                        : webrtcLatency < 300
-                        ? "orange"
-                        : "red",
-                    fontWeight: 500,
-                  }}
-                >
-                  ⏱️ WebRTC Latency: {webrtcLatency} ms
-                </div>
-              )}
-            </>
-          )}
-          {/* Display general API latencies */}
-          {openaiApiLatency !== null && (
-            <div
-              style={{
-                marginTop: "0.5rem",
-                color:
-                  openaiApiLatency < 300
-                    ? "green"
-                    : openaiApiLatency < 600
-                    ? "orange"
-                    : "red",
-                fontWeight: 500,
-              }}
-            >
-              🌐 OpenAI: {openaiApiLatency} ms
-            </div>
-          )}
-          {backendApiLatency !== null && (
-            <div
-              style={{
-                marginTop: "0.5rem",
-                color:
-                  backendApiLatency < 150
-                    ? "green"
-                    : backendApiLatency < 300
-                    ? "orange"
-                    : "red",
-                fontWeight: 500,
-              }}
-            >
-              🏠 TechTransThai: {backendApiLatency} ms
-            </div>
-          )}
+      <div className="button-container">
+        <div className="control-button idle" onClick={() => (location.href = "/conversation")}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="1.2em"
+            height="1.2em"
+            className="svg"
+          >
+            <path
+              fill="currentColor"
+              d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2"
+            ></path>
+          </svg>
+          <a>Conversation</a>
+        </div>
+        <div className="control-button disabled">
+          <svg xmlns="http://www.w3.org/2000/svg" className="svg" width="1.2em" height="1.2em" viewBox="0 0 512 512"><path fill="currentColor" d="M473.16 221.48l-2.26-9.59H262.46v88.22H387c-12.93 61.4-72.93 93.72-121.94 93.72-35.66 0-73.25-15-98.13-39.11a140.08 140.08 0 01-41.8-98.88c0-37.16 16.7-74.33 41-98.78s61-38.13 97.49-38.13c41.79 0 71.74 22.19 82.94 32.31l62.69-62.36C390.86 72.72 340.34 32 261.6 32c-60.75 0-119 23.27-161.58 65.71C58 139.5 36.25 199.93 36.25 256s20.58 113.48 61.3 155.6c43.51 44.92 105.13 68.4 168.58 68.4 57.73 0 112.45-22.62 151.45-63.66 38.34-40.4 58.17-96.3 58.17-154.9 0-24.67-2.48-39.32-2.59-39.96z" /></svg>
+          <a>Vocabulary</a>
+        </div>
+        <div className="control-button disabled">
+          <svg xmlns="http://www.w3.org/2000/svg" className="svg" width="1.2em" height="1.2em" viewBox="0 0 512 512"><path fill="currentColor" d="M473.16 221.48l-2.26-9.59H262.46v88.22H387c-12.93 61.4-72.93 93.72-121.94 93.72-35.66 0-73.25-15-98.13-39.11a140.08 140.08 0 01-41.8-98.88c0-37.16 16.7-74.33 41-98.78s61-38.13 97.49-38.13c41.79 0 71.74 22.19 82.94 32.31l62.69-62.36C390.86 72.72 340.34 32 261.6 32c-60.75 0-119 23.27-161.58 65.71C58 139.5 36.25 199.93 36.25 256s20.58 113.48 61.3 155.6c43.51 44.92 105.13 68.4 168.58 68.4 57.73 0 112.45-22.62 151.45-63.66 38.34-40.4 58.17-96.3 58.17-154.9 0-24.67-2.48-39.32-2.59-39.96z" /></svg>
+          <a>Writing</a>
         </div>
       </div>
     </div>

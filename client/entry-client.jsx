@@ -6,6 +6,7 @@ import Login from "./pages/login";
 import "./base.css";
 import Register from "./pages/register";
 import EmailLogin from "./pages/email_login";
+import Conversation from "./pages/Conversation";
 
 const container = document.getElementById("root");
 
@@ -21,6 +22,7 @@ createRoot(container).render(
         <Route path="/" element={<App />} />
         <Route path="/login" element={<Login />} />
         <Route path="/email" element={<EmailLogin />} />
+        <Route path="/conversation" element={<Conversation />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

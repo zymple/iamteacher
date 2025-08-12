@@ -6,6 +6,7 @@ import App from "./components/App";
 import Login from "./pages/login";
 import Register from "./pages/register";
 import EmailLogin from "./pages/email_login";
+import Conversation from "./pages/Conversation";
 
 // note, to add new endpoint. you need to edit entry-server.jsx and entry-client.jsx
 // if you want the path to be public, go edit server.js at line 39
@@ -19,6 +20,7 @@ export function render(url) {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<App />} />
+          <Route path="/conversation" element={<Conversation />} />
           <Route path="/email" element={<EmailLogin />} />
         </Routes>
       </StaticRouter>
