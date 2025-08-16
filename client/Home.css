@@ -1,0 +1,130 @@
+.home-information-box {
+    width: 390px;
+    height: 200px;
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    background: #8478ae;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
+    padding: 15px 20px;
+    box-sizing: border-box;
+}
+
+.alt {
+    font-size: 18px;
+    color: #b7a6d4;
+}
+
+.main {
+    font-size: 32px;
+    color: #FFF;
+    font-weight: bold;
+}
+
+.user-avatar {
+    border-radius: 50%;
+    border: 4px solid white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    animation: popIn 0.4s ease;
+    margin-left: 20px;
+}
+
+.control-button.dac1e6 {
+    background-color: #dac1e6;
+}
+
+.text-container.home {
+    margin-left: 20px;
+    text-align: left;
+}
+
+.lesson-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-button.small {
+    background-color: #4a5d8c;
+    color: white;
+    width: 180px;
+    height: 46px;
+    font-size: 16px;
+}
+
+.status-box {
+    width: 226px;
+    height: 270px;
+    border: 1px solid #ccc;
+    border-radius: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background: #fffafc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    position: relative;
+    z-index: 1;
+    margin-top: -50px;
+    margin-left: -120px;
+    padding: 15px;
+    gap: 15px;
+}
+
+.svg.status {
+    width: 3em;
+    height: 3em;
+    flex-shrink: 0;
+}
+
+
+.status-item {
+    display: flex;
+    align-items: center;
+}
+
+.status-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.status-span {
+    white-space: nowrap;
+    font-size: 16px;
+    color: #555;
+}
+
+.status-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    display: block;
+    white-space: nowrap;
+}
+
+.status-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.status-title {
+    width: 100%;
+}
+
+.status-title-text {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin: 0;
+    padding-left: 10px;
+}
