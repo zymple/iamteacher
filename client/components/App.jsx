@@ -21,6 +21,12 @@ export default function Conversation() {
         console.error("Failed to load user info", err);
       });
   }, []);
+
+  async function logout() {
+    await fetch("/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
   return (
     <div className="app-container">
       <div className="home-information-box">
@@ -74,7 +80,10 @@ export default function Conversation() {
           </svg>
           <a>Conversation</a>
         </div>
-        <div className="control-button disabled">
+        <div className="control-button idle logout" onClick={logout}>
+          <a>Logout</a>
+        </div>
+        {/* <div className="control-button disabled">
           <svg xmlns="http://www.w3.org/2000/svg" className="svg" width="1.2em" height="1.2em" viewBox="0 0 512 512">
             <path d="M256 160c16-63.16 76.43-95.41 208-96a15.94 15.94 0 0116 16v288a16 16 0 01-16 16c-128 0-177.45 25.81-208 64-30.37-38-80-64-208-64-9.88 0-16-8.05-16-17.93V80a15.94 15.94 0 0116-16c131.57.59 192 32.84 208 96zM256 160v288" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32"/>
           </svg>
@@ -85,7 +94,7 @@ export default function Conversation() {
             <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M364.13 125.25L87 403l-23 45 44.99-23 277.76-277.13-22.62-22.62zM420.69 68.69l-22.62 22.62 22.62 22.63 22.62-22.63a16 16 0 000-22.62h0a16 16 0 00-22.62 0z"/>
           </svg>
           <a>Writing</a>
-        </div>
+        </div> */}
       </div>
     </div>
   );

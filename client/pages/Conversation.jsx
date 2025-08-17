@@ -237,19 +237,17 @@ export default function Conversation() {
 
   return (
     <div className="app-container">
+      <div className="back" onClick={() => (location.href = "/")}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            width="2.5em"
+          >
+            <path d="m 12 2 c 0 -0.265625 -0.105469 -0.519531 -0.292969 -0.707031 c -0.390625 -0.390625 -1.023437 -0.390625 -1.414062 0 l -6 6 c -0.1875 0.1875 -0.292969 0.441406 -0.292969 0.707031 s 0.105469 0.519531 0.292969 0.707031 l 6 6 c 0.390625 0.390625 1.023437 0.390625 1.414062 0 c 0.1875 -0.1875 0.292969 -0.441406 0.292969 -0.707031 s -0.105469 -0.519531 -0.292969 -0.707031 l -5.292969 -5.292969 l 5.292969 -5.292969 c 0.1875 -0.1875 0.292969 -0.441406 0.292969 -0.707031 z m 0 0" fill="#2e3436"/>
+          </svg>
+        </div>
       <div className="page-title">
         <strong>iAmTeacher - Yesterday's movie</strong>
-      </div>
-
-      <div style={{ position: "absolute", top: "10px", right: "10px", textAlign: "right" }}>
-        {email && (
-          <>
-            <div>
-              Welcome, <strong>{email}</strong>{" "}
-              <button onClick={logout} className="control-button logout">Logout</button>
-            </div>
-          </>
-        )}
       </div>
 
       <div className="scene-wrapper">
