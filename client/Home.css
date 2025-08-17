@@ -128,3 +128,22 @@
     margin: 0;
     padding-left: 10px;
 }
+
+.logout {
+    margin-bottom: 30px;
+    background-color: transparent!important;
+    box-shadow: none!important;
+    color: #2F4971!important;
+}
+.back {
+    margin-bottom: 10px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    margin-right: 250px;
+    align-items: left;
+    justify-content: left;
+    cursor: pointer;
+    top: 2%;
+    position: absolute;
+}
