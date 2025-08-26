@@ -76,6 +76,12 @@ export default function Conversation() {
 
   async function startSession() {
     try {
+      // Log "start" action
+    await fetch("/log-voice-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "start" }),
+    });
       const tokenResponse = await fetch("/token");
       const data = await tokenResponse.json();
       const EPHEMERAL_KEY = data.client_secret.value;
@@ -132,6 +138,11 @@ export default function Conversation() {
       peerConnection.current.close();
     }
 
+  fetch("/log-voice-session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "stop", duration: callDuration }),
+  });
     setIsSessionActive(false);
     setIsRecording(false);
     setDataChannel(null);
