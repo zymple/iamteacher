@@ -13,25 +13,82 @@ const app = express();
 const port = process.env.PORT || 3000;
 const apiKey = process.env.OPENAI_API_KEY;
 const DEBUG = process.env.DEBUG?.toLowerCase() === "true";
+const LOGGING = process.env.LOGGING?.toLowerCase() === "true";
 
 const openai = new OpenAI({ apiKey });
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.set("trust proxy", true); // allows req.ip to respect X-Forwarded-For headers
 
-// Create session-token.txt if it doesn't exist
+// Create session-token.txt and user-activity.log if it doesn't exist
 const sessionFile = "session-token.txt";
+const logsFile = "user-activity.log";
 if (!fs.existsSync(sessionFile)) {
   fs.writeFileSync(sessionFile, "");
   if (DEBUG) console.log(`📄 Created ${sessionFile}`);
 }
-
+if (!fs.existsSync(logsFile)) {
+  fs.writeFileSync(logsFile, "");
+  if (DEBUG) console.log(`📄 Created ${logsFile}`);
+}
 // System prompt (Thai English teacher role)
 const systemPrompt = `
 สวัสดีครับ วันนี้คุณคือครูสอนภาษาอังกฤษที่มีประสบการณ์สอนเด็ก ๆ มามากกว่า 40 ปี คุณจะเชี่ยวชาญด้านการสอนเด็กอายุ 9-11 ขวบ วันนี้คุณจะสอนเรื่องบทสนทนาเกี่ยวกับการคุยเรื่องหนัง คุณจะเริ่มด้วยประโยคในลักษณะที่ว่าคุณจะถามเด็กว่า เขาดูหนังอะไรบ้าง และใช้ตรงนี้เป็นจุดเริ่มในการสอนภาษาอังกฤษ เริ่มเลยครับ
 คุณควรเริ่มพูดก่อนโดยไม่รอเสียงจากผู้ใช้
 `;
+
+// Addon stuff
+function getClientIP(req) {
+  return (
+    req.headers["x-real-ip"] ||
+    (req.headers["x-forwarded-for"]?.split(",")?.[0]?.trim()) ||
+    req.socket?.remoteAddress ||
+    req.ip
+  );
+}
+
+const logBuffer = [];
+let flushing = false;
+
+async function logUserActivity({ email = "Unknown", action = "", ip = "?", ua = "?" }) {
+  if (!LOGGING) return;
+
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] 📘 ${email} ${action} from ${ip} UA="${ua}"\n`;
+
+  // Try immediate write
+  try {
+    await fsPromises.appendFile(logsFile, logEntry);
+    if (DEBUG) console.log(logEntry.trim());
+  } catch (err) {
+    console.error("❗ Failed to write log. Buffering in memory:", err.message);
+    logBuffer.push(logEntry);
+  }
+}
+
+
+// Repeat
+setInterval(async () => {
+  if (!LOGGING || logBuffer.length === 0 || flushing) return;
+
+  flushing = true;
+
+  const entries = logBuffer.splice(0); // copy & empty buffer
+  const content = entries.join("");
+
+  try {
+    await fsPromises.appendFile(logsFile, content);
+    if (DEBUG) console.log(`📝 Flushed ${entries.length} buffered log(s).`);
+  } catch (err) {
+    console.error("❗ Failed to flush log buffer:", err.message);
+    logBuffer.unshift(...entries); // put back
+  }
+
+  flushing = false;
+}, 5000); // Retry every 5 sec
+
 
 // Create Vite server for SSR
 const vite = await createViteServer({
@@ -113,6 +170,13 @@ app.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    await logUserActivity({
+      email,
+      action: "logged in",
+      ip: getClientIP(req),
+      ua: req.headers["user-agent"]
+  });
+
     res.redirect("/");
 
   } catch (err) {
@@ -145,6 +209,38 @@ app.get("/api/me", (req, res) => {
   res.json({ email: req.user });
 });
 
+app.post("/log-voice-session", express.json(), async (req, res) => {
+  const token = req.cookies["auth-token"];
+  if (!token) return res.status(401).json({ error: "Not authenticated" });
+
+  const { action, duration = 0 } = req.body;
+
+  try {
+    const sessions = await fsPromises.readFile(sessionFile, "utf-8");
+    const line = sessions.split("\n").find((l) => l.startsWith(token + ":"));
+    if (!line) return res.status(403).json({ error: "Invalid session" });
+
+    const [, email] = line.trim().split(":");
+    const timestamp = new Date().toISOString();
+    const ip = getClientIP(req);
+
+    const logEntry =
+      action === "start"
+        ? `[${timestamp}] 🟢 ${email} started a voice session from ${ip}`
+        : `[${timestamp}] 🔴 ${email} ended voice session after ${duration}s from ${ip}`;
+
+    await fsPromises.appendFile(logsFile, logEntry + "\n");
+
+    if (DEBUG) console.log(logEntry);
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("Voice session log error:", err);
+    res.status(500).json({ error: "Failed to log session" });
+  }
+});
+
+
 app.post("/logout", async (req, res) => {
   const token = req.cookies["auth-token"];
   if (token) {
@@ -161,12 +257,24 @@ app.post("/logout", async (req, res) => {
   }
 
   res.clearCookie("auth-token");
+    await logUserActivity({
+      email: req.user || "Unknown",
+      action: "logged out",
+      ip: getClientIP(req),
+      ua: req.headers["user-agent"]
+  });
   res.redirect("/login");
 });
 
 // GET /token: create OpenAI Realtime session
 app.get("/token", async (req, res) => {
   try {
+    await logUserActivity({
+      email: req.user || "Unknown",
+      action: "requested OpenAI token (voice session start)",
+      ip: getClientIP(req),
+      ua: req.headers["user-agent"]
+  });
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
       headers: {

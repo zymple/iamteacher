@@ -30,3 +30,6 @@ uploads/
 
 # auth
 session-token.txt
+
+# log
+user-activity.log
