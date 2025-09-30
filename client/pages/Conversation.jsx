@@ -19,7 +19,14 @@ export default function Conversation() {
   const audioElement = useRef(null);
 
   // Define BASE_URL, assuming it's available in your .env or similar
-  const BASE_URL = "https://iamteacher-fossasia-demo.techtransthai.org";
+  // get BASE_URL from api
+  const [BASE_URL, setBaseUrl] = useState("");
+
+  useEffect(() => {
+    fetch("/config").then(res => res.json()).then(data => {
+      setBaseUrl(data.baseUrl);
+    })
+  }, []);
 
   useEffect(() => {
     fetch("/api/me")

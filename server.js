@@ -14,8 +14,13 @@ const port = process.env.PORT || 3000;
 const apiKey = process.env.OPENAI_API_KEY;
 const DEBUG = process.env.DEBUG?.toLowerCase() === "true";
 const LOGGING = process.env.LOGGING?.toLowerCase() === "true";
+const BASE_URL = process.env.BASE_URL;
 
 const openai = new OpenAI({ apiKey });
+
+app.get("/config", (req, res) => {
+  res.json({ baseUrl: BASE_URL });
+});
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
