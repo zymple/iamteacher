@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import logo from "/assets/openai-logomark.svg";
-import "../App.css";
+import "../css/App.css";
+import Navigation from "../components/Navigation";
+import BackButton from "../components/conversation/BackButton";
+import ControlButton from "../components/conversation/ControlButton";
+import DialogueBox from "../components/conversation/DialogueBox";
+import StatusDisplay from "../components/conversation/StatusDisplay";
 
 export default function Conversation() {
   const [email, setemail] = useState("");
@@ -248,101 +253,31 @@ export default function Conversation() {
 
   return (
     <div className="app-container">
-      <div className="back" onClick={() => (location.href = "/")}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 16 16"
-            width="2.5em"
-          >
-            <path d="m 12 2 c 0 -0.265625 -0.105469 -0.519531 -0.292969 -0.707031 c -0.390625 -0.390625 -1.023437 -0.390625 -1.414062 0 l -6 6 c -0.1875 0.1875 -0.292969 0.441406 -0.292969 0.707031 s 0.105469 0.519531 0.292969 0.707031 l 6 6 c 0.390625 0.390625 1.023437 0.390625 1.414062 0 c 0.1875 -0.1875 0.292969 -0.441406 0.292969 -0.707031 s -0.105469 -0.519531 -0.292969 -0.707031 l -5.292969 -5.292969 l 5.292969 -5.292969 c 0.1875 -0.1875 0.292969 -0.441406 0.292969 -0.707031 z m 0 0" fill="#2e3436"/>
-          </svg>
-        </div>
+      <BackButton />
       <div className="page-title">
         <strong>iAmTeacher - Yesterday's movie</strong>
       </div>
 
       <div className="scene-wrapper">
         <img src="/assets/tutor_f.png" alt="Tutor Avatar" className="avatar" />
-
-        <div className="dialogue-box">
-          <div className="dialogue-text">
-            <strong>ติวเตอร์:</strong> {aiReply || <em>กำลังรอคำถามของคุณ</em>}
-          </div>
-        </div>
-
-        <div className="button-container">
-          <button
-            onClick={async () => {
-              if (isSessionActive) {
-                stopSession();
-              } else {
-                await startSession();
-              }
-            }}
-            className={`control-button ${isRecording ? "recording" : "idle"}`}
-          >
-            {isRecording ? "วางสาย" : "เริ่มการโทร"}
-          </button>
-        </div>
-
-        {/* Status Display */}
-        <div style={{ marginTop: 10, textAlign: "center" }}>
-          {isSessionActive && (
-            <>
-              <div>📞 Duration: {formatDuration(callDuration)}</div>
-              {webrtcLatency !== null && (
-                <div
-                  style={{
-                    marginTop: "0.5rem",
-                    color:
-                      webrtcLatency < 150
-                        ? "green"
-                        : webrtcLatency < 300
-                        ? "orange"
-                        : "red",
-                    fontWeight: 500,
-                  }}
-                >
-                  ⏱️ WebRTC Latency: {webrtcLatency} ms
-                </div>
-              )}
-            </>
-          )}
-          {/* Display general API latencies */}
-          {openaiApiLatency !== null && (
-            <div
-              style={{
-                marginTop: "0.5rem",
-                color:
-                  openaiApiLatency < 300
-                    ? "green"
-                    : openaiApiLatency < 600
-                    ? "orange"
-                    : "red",
-                fontWeight: 500,
-              }}
-            >
-              🌐 OpenAI: {openaiApiLatency} ms
-            </div>
-          )}
-          {backendApiLatency !== null && (
-            <div
-              style={{
-                marginTop: "0.5rem",
-                color:
-                  backendApiLatency < 150
-                    ? "green"
-                    : backendApiLatency < 300
-                    ? "orange"
-                    : "red",
-                fontWeight: 500,
-              }}
-            >
-              🏠 TechTransThai: {backendApiLatency} ms
-            </div>
-          )}
-        </div>
+        <DialogueBox aiReply={aiReply} />
+        <ControlButton
+          isRecording={isRecording}
+          isSessionActive={isSessionActive}
+          startSession={startSession}
+          stopSession={stopSession}
+        />
+        <StatusDisplay
+          callDuration={callDuration}
+          webrtcLatency={webrtcLatency}
+          openaiApiLatency={openaiApiLatency}
+          backendApiLatency={backendApiLatency}
+          isSessionActive={isSessionActive}
+          formatDuration={formatDuration}
+        />
       </div>
+
+      <Navigation />
     </div>
   );
 }

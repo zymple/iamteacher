@@ -1,0 +1,47 @@
+.navigation-bottom {
+    position: fixed;
+    bottom: 30px;
+    width: 500px;
+    height: 87px;
+    background: #ffffffFF;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+    border-radius: 30px;
+}
+
+.navigation-button {
+    text-align: center;
+    color: #2f2f2f;
+    font-size: 14px;
+    cursor: pointer;
+    width: 120px;
+    height: 55px;
+    font-size: 14px;
+    gap: 4px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease-in-out;
+    margin-left: 10px;
+}
+
+.navigation-button img {
+    width: 24px;
+    height: 24px;
+}
+
+.navigation-button:hover {
+    background: #ebebebFF;
+    border-radius: 10px;
+}
+
+.navigation-button.active {
+    background: #ebebebFF;
+    color: #2f2f2f;
+    border-radius: 10px;
+    margin-left: 10px;
+}
