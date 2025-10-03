@@ -28,22 +28,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set("trust proxy", true); // allows req.ip to respect X-Forwarded-For headers
 
-// make folder for users stuff
-const usersFolder = "./users";
-const audioFolder = "./users/audio"
-if (!fs.existsSync(usersFolder)) {
-  if (DEBUG) console.log("Making a folder for users data!");
-  fs.mkdirSync(usersFolder);
+// make folder for iAT stuff
+const configFolder = "./config"
+const userDataFolder = "./userdata"
+const logsFolder = "./logs"
+if (!fs.existsSync(userDataFolder)) {
+  if (DEBUG) console.log("Making a folder for userdata!");
+  fs.mkdirSync(userDataFolder);
 }
 
-if (!fs.existsSync(audioFolder)) {
-  if (DEBUG) console.log("Making a folder for audio recordings!");
-  fs.mkdirSync(audioFolder);
+if (!fs.existsSync(configFolder)) {
+  if (DEBUG) console.log("Making a folder for configs!");
+  fs.mkdirSync(configFolder);
+}
+
+if (!fs.existsSync(logsFolder)) {
+  if (DEBUG) console.log("Making a folder for logging!");
+  fs.mkdirSync(logsFolder);
 }
 
 // Create session-token.txt and user-activity.log if it doesn't exist
-const sessionFile = "session-token.txt";
-const logsFile = "./users/user-activity.log";
+const sessionFile = "./userdata/session-token.txt";
+const logsFile = "./logs/access.log";
 if (!fs.existsSync(sessionFile)) {
   fs.writeFileSync(sessionFile, "");
   if (DEBUG) console.log(`📄 Created ${sessionFile}`);
@@ -135,7 +141,7 @@ app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const userData = await fsPromises.readFile("./user.txt", "utf-8");
+    const userData = await fsPromises.readFile("./config/user.txt", "utf-8");
     const users = userData
       .split("\n")
       .filter(Boolean)
@@ -180,9 +186,22 @@ app.post("/login", async (req, res) => {
     }
 
     const token = crypto.randomBytes(32).toString("hex");
-    if (DEBUG) console.log(`✅ Login successful for "${email}". Generated token: ${token}`);
+    const sessionid = crypto.randomUUID().toString();
+    if (DEBUG) console.log(`✅ Login successful for "${email}". Generated token: ${token} and SessionID: ${sessionid}`);
 
-    await fsPromises.appendFile(sessionFile, `${token}:${email}\n`);
+    await fsPromises.appendFile(sessionFile, `${token}:${email}:${sessionid}\n`);
+
+    // Check if this email exists in the userdata folder or not
+    if (!fs.existsSync(userDataFolder + "/" + email)) {
+      if (DEBUG) console.log(`Making a logging folder for ${email}!`);
+      fs.mkdirSync(userDataFolder + "/" + email);
+    }
+
+    // Create the session-id folder
+    if (!fs.existsSync(userDataFolder + "/" + email + "/" + sessionid)) {
+      if (DEBUG) console.log(`Making a logging folder for ${sessionid}!`);
+      fs.mkdirSync(userDataFolder + "/" + email + "/" + sessionid);
+    }
 
     res.cookie("auth-token", token, {
       httpOnly: true,

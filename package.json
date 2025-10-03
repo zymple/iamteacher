@@ -1,4 +1,8 @@
 {
+  "name": "iAmTeacher",
+  "version": "1.0.1",
+  "description": "iAmTeacher (pronounced I am teacher) is an AI-powered English tutor app for students in rural areas, which most of them lack capable English teachers. This app will focus on vocal conversations, while also including written quizzes and other educational activities.",
+  "main": "server.js",
   "type": "module",
   "scripts": {
     "dev": "node server.js --dev",
