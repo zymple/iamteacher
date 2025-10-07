@@ -1,11 +1,11 @@
 {
   "name": "iAmTeacher",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "iAmTeacher (pronounced I am teacher) is an AI-powered English tutor app for students in rural areas, which most of them lack capable English teachers. This app will focus on vocal conversations, while also including written quizzes and other educational activities.",
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "node server.js --dev",
+    "dev": "nodemon --watch server.js --watch client --ext js,jsx,json --exec node server.js",
     "start": "node server.js",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build --outDir dist/client --ssrManifest",
@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.7.0",
+    "nodemon": "^3.1.10",
     "postcss": "^8.4.31",
     "postcss-nesting": "^12.0.2",
     "postcss-preset-env": "^7.7.1",
