@@ -8,23 +8,42 @@ import fsPromises from "fs/promises";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import multer from "multer";
 
 const app = express();
 const port = process.env.PORT || 3000;
 const apiKey = process.env.OPENAI_API_KEY;
 const DEBUG = process.env.DEBUG?.toLowerCase() === "true";
 const LOGGING = process.env.LOGGING?.toLowerCase() === "true";
+const BASE_URL = process.env.BASE_URL;
 
 const openai = new OpenAI({ apiKey });
+
+app.get("/config", (req, res) => {
+  res.json({ baseUrl: BASE_URL });
+});
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set("trust proxy", true); // allows req.ip to respect X-Forwarded-For headers
 
+// make folder for users stuff
+const usersFolder = "./users";
+const audioFolder = "./users/audio"
+if (!fs.existsSync(usersFolder)) {
+  if (DEBUG) console.log("Making a folder for users data!");
+  fs.mkdirSync(usersFolder);
+}
+
+if (!fs.existsSync(audioFolder)) {
+  if (DEBUG) console.log("Making a folder for audio recordings!");
+  fs.mkdirSync(audioFolder);
+}
+
 // Create session-token.txt and user-activity.log if it doesn't exist
 const sessionFile = "session-token.txt";
-const logsFile = "user-activity.log";
+const logsFile = "./users/user-activity.log";
 if (!fs.existsSync(sessionFile)) {
   fs.writeFileSync(sessionFile, "");
   if (DEBUG) console.log(`📄 Created ${sessionFile}`);
