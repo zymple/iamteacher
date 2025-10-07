@@ -1,3 +1,5 @@
+import { Translate } from "../../languages/TranslationsManager.jsx";
+
 export default function ControlButton({ isRecording, isSessionActive, startSession, stopSession }) {
   return (
     <div className="button-container">
@@ -8,7 +10,7 @@ export default function ControlButton({ isRecording, isSessionActive, startSessi
         }}
         className={`control-button ${isRecording ? "recording" : "idle"}`}
       >
-        {isRecording ? "วางสาย" : "เริ่มการโทร"}
+        {isRecording ? <Translate>app.speak_screen.end_call</Translate> : <Translate>app.speak_screen.start_call</Translate>}
       </button>
     </div>
   );

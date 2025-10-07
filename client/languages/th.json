@@ -1,0 +1,38 @@
+{
+    "login": {
+        "login_with_email": "ลงชื่อเข้าใช้ด้วยอีเมล์",
+        "input_password": "ใส่รหัสผ่านของคุณ",
+        "input_email": "ใส่อีเมล์ของคุณ",
+
+        "email": "อีเมล์",
+        "password": "รหัสผ่าน",
+        "login": "ลงชื่อเข้าใช้"
+    },
+
+    "app": {
+        "hello": "สวัสดี, ",
+        "ready_to_learn": "พร้อมที่จะเรียนรู้หรือยัง?",
+        "status_box": {
+            "status": "สถานะ",
+            "new_words": "คำศัพท์ใหม่",
+            "total_time": "เวลาทั้งหมด"
+        },
+
+        "conversation": "บทสนทนา",
+        "logout": "ออกจากระบบ",
+        "tutor-description": "Improve your English while still having fun!",
+
+        "speak_screen": {
+            "start_call": "เริ่มการโทร",
+            "end_call": "วางสาย",
+            "waiting_for_question": "กำลังรอคำถามของคุณ",
+            "duration": "ระยะเวลาการโทร:"
+        },
+
+        "navigation": {
+            "learn": "เรียนรู้",
+            "chat": "สนทนา",
+            "me": "ฉัน"
+        }
+    }
+}
