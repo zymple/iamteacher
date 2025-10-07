@@ -30,8 +30,8 @@ uploads/
 users/audio
 users/*
 
-# auth
-session-token.txt
+# userdata
+userdata*
 
 # log
-user-activity.log
+logs*
