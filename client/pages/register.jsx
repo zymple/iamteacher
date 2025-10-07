@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import '../App.css';
-import '../Login.css';
+import '../css/App.css';
+import '../css/Login.css';
 
 function Login() {
 
