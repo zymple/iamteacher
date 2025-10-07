@@ -60,9 +60,9 @@ export default function Conversation() {
             </div>
           </div>
         </div>
-        <div className="lesson-container">
+        {/* <div className="lesson-container">
           <button className="control-button small">Start Lesson</button>
-        </div>
+        </div> */}
       </div>
 
       <div className="button-container">
