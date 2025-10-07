@@ -1,12 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import App from "./components/App";
+import App from "./pages/App.jsx";
 import Login from "./pages/login";
-import "./base.css";
+import "./css/base.css";
 import Register from "./pages/register";
 import EmailLogin from "./pages/email_login";
 import Conversation from "./pages/Conversation";
+import NotFound from './pages/NotFound.jsx'
 
 const container = document.getElementById("root");
 
@@ -23,6 +24,7 @@ createRoot(container).render(
         <Route path="/login" element={<Login />} />
         <Route path="/email" element={<EmailLogin />} />
         <Route path="/conversation" element={<Conversation />} />
+        <Route path="*" element={<NotFound />} />  {/* catch-all 404 */}
       </Routes>
     </BrowserRouter>
   </StrictMode>,
