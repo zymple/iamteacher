@@ -1,4 +1,5 @@
 import '../css/Login.css';
+import { Translate } from "../languages/TranslationsManager.jsx"
 
 function Login() {
   return (
@@ -6,7 +7,7 @@ function Login() {
       <img src="/assets/iamteacher.svg" alt="Tutor Avatar" className="avatar" />
       <div className="text-container">
         <p className="tutor-name">iAmTeacher</p>
-        <p className="tutor-description">Improve your English while still having fun!</p>
+        <p className="tutor-description"><Translate>app.tutor-description</Translate></p>
       </div>
 
       <div className="button-container">
@@ -27,7 +28,7 @@ function Login() {
               d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 4l-8 5l-8-5V6l8 5l8-5z"
             ></path>
           </svg>
-          <a href="/email">Sign in with Email</a>
+          <a href="/email"><Translate>login.login_with_email</Translate></a>
         </div>
         {/* <div className="control-button disabled">
           <svg

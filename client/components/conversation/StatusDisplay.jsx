@@ -1,9 +1,11 @@
+import { Translate } from "../../languages/TranslationsManager.jsx";
+
 export default function StatusDisplay({ callDuration, webrtcLatency, openaiApiLatency, backendApiLatency, isSessionActive, formatDuration }) {
   return (
     <div style={{ marginTop: 10, textAlign: "center" }}>
       {isSessionActive && (
         <>
-          <div>📞 Duration: {formatDuration(callDuration)}</div>
+          <div>📞 <Translate>app.speak_screen.duration</Translate> {formatDuration(callDuration)}</div>
           {webrtcLatency !== null && (
             <div
               style={{

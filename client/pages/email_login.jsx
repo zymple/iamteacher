@@ -1,12 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import '../css/App.css';
 import '../css/Login.css';
+import { Translate } from "../languages/TranslationsManager.jsx";
 
 function EmailLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  // why the hell can't i use react component with placeholder
+  const [placeholders, setPlaceholders] = useState({
+    email: "",
+    password: ""
+  });
+
+  useEffect(() => { 
+    const renderAndCapture = (key, callback) => {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+
+      import("react-dom").then(ReactDOM => {
+        ReactDOM.render(<Translate>{key}</Translate>, container, () => {
+          setTimeout(() => {
+            callback(container.textContent);
+            document.body.removeChild(container); // clean up
+          }, 50); // tiny delay to ensure render
+        });
+      });
+    };
+
+    renderAndCapture("login.input_email", (text) =>
+      setPlaceholders(prev => ({ ...prev, email: text }))
+    );
+    renderAndCapture("login.input_password", (text) =>
+      setPlaceholders(prev => ({ ...prev, password: text }))
+    );
+  }, []);
+  
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -37,26 +67,26 @@ function EmailLogin() {
       <img src="/assets/iamteacher.svg" alt="Tutor Avatar" className="avatar" />
       <div className="text-container">
         <p className="tutor-name">iAmTeacher</p>
-        <p className="tutor-description">Improve your English while still having fun!</p>
+        <p className="tutor-description"><Translate>app.tutor-description</Translate></p>
       </div>
 
       <form className="login-form" onSubmit={handleLogin}>
-        <label htmlFor="email">Email</label>
+        <label htmlFor="email"><Translate>login.email</Translate></label>
         <input
           id="email"
           type="text"
-          placeholder="Enter your email"
+          placeholder={placeholders.email}
           autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password"><Translate>login.password</Translate></label>
         <input
           id="password"
           type="password"
-          placeholder="Enter your password"
+          placeholder={placeholders.password}
           autoComplete="current-password"
           required
           value={password}
@@ -67,7 +97,7 @@ function EmailLogin() {
         }
         <div className="button-container">
           <button className="control-button idle" type="submit">
-            Login
+            <Translate>login.login</Translate>
           </button>
         </div>
       </form>

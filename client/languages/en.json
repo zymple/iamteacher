@@ -1,0 +1,38 @@
+{
+    "login": {
+        "login_with_email": "Sign in with Email",
+        "input_password": "Enter your password",
+        "input_email": "Enter your email",
+
+        "email": "Email",
+        "password": "Password",
+        "login": "Login"
+    },
+
+    "app": {
+        "hello": "Hi, ",
+        "ready_to_learn": "Ready to learn today?",
+        "status_box": {
+            "status": "Status",
+            "new_words": "New words",
+            "total_time": "Total time"
+        },
+
+        "conversation": "Conversation",
+        "logout": "Logout",
+        "tutor-description": "Improve your English while still having fun!",
+
+        "speak_screen": {
+            "start_call": "Start Call",
+            "end_call": "End Call",
+            "waiting_for_question": "Waiting for your question.",
+            "duration": "Duration:"
+        },
+
+        "navigation": {
+            "learn": "Learn",
+            "chat": "Chat",
+            "me": "Me"
+        }
+    }
+}
