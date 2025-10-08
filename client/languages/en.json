@@ -34,5 +34,15 @@
             "chat": "Chat",
             "me": "Me"
         }
+    },
+
+    "error": {
+        "microphone_permission_blocked": "Microphone permission is blocked.\n\nPlease enable microphone access in your browser settings for this site, then reload.",
+        "microphone_aquired_but_no_audio": "Microphone was acquired but not producing audio.\n\nPlease check your input device and try again.",
+        "microphone_permission_denied": "Microphone permission was denied.\n\nPlease allow microphone access and try again.",
+        "microphone_not_found": "No microphone was found or the selected input is unavailable.\n\nPlease plug in a mic or choose a different input device.",
+        "microphone_failed_to_access_generic": "Failed to access microphone.\n\n",
+        "no_response_from_ai": "No response from AI for 30 seconds. The session was ended.",
+        "in_app_browser": "It looks like you're using an in-app browser (e.g., LINE/Instagram). Microphone access might not work here.\n\nPlease open this page in your external browser (Chrome/Safari/Firefox) and try again."
     }
 }
