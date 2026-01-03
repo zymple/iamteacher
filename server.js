@@ -8,7 +8,10 @@ import OpenAI from "openai";
 import cookieParser from "cookie-parser";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import multer from "multer"; // (not used here, but kept if you need later)
+import { initDB, logAccessDB, pool } from "./helpers/database.js";
+import { addUser, deleteUser, resetPassword } from "./helpers/admincommands.js";
+
+await initDB();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -35,37 +38,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set("trust proxy", true); // respect X-Forwarded-For
 
-// ==== Directories ====
-const configFolder = "./config";
-const userDataFolder = "./userdata";
-const logsFolder = "./logs";
-
-if (!fs.existsSync(userDataFolder)) {
-  if (DEBUG) console.log("Making a folder for userdata!");
-  fs.mkdirSync(userDataFolder);
-}
-if (!fs.existsSync(configFolder)) {
-  if (DEBUG) console.log("Making a folder for configs!");
-  fs.mkdirSync(configFolder);
-}
-if (!fs.existsSync(logsFolder)) {
-  if (DEBUG) console.log("Making a folder for logging!");
-  fs.mkdirSync(logsFolder);
-}
-
-// ==== Files ====
-const sessionFile = "./userdata/session-token.txt";
-const logsFile = "./logs/access.log";
-
-if (!fs.existsSync(sessionFile)) {
-  fs.writeFileSync(sessionFile, "");
-  if (DEBUG) console.log(`📄 Created ${sessionFile}`);
-}
-if (!fs.existsSync(logsFile)) {
-  fs.writeFileSync(logsFile, "");
-  if (DEBUG) console.log(`📄 Created ${logsFile}`);
-}
-
 // ==== System prompt (Thai English teacher role) ====
 const systemPrompt = `
 สวัสดีครับ วันนี้คุณคือครูสอนภาษาอังกฤษที่มีประสบการณ์สอนเด็ก ๆ มามากกว่า 40 ปี คุณจะเชี่ยวชาญด้านการสอนเด็กอายุ 9-11 ขวบ วันนี้คุณจะสอนเรื่องบทสนทนาเกี่ยวกับการคุยเรื่องหนัง คุณจะเริ่มด้วยประโยคในลักษณะที่ว่าคุณจะถามเด็กว่า เขาดูหนังอะไรบ้าง และใช้ตรงนี้เป็นจุดเริ่มในการสอนภาษาอังกฤษ เริ่มเลยครับ
@@ -73,6 +45,10 @@ const systemPrompt = `
 `;
 
 // ==== Helpers ====
+function hashToken(token) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
 function getClientIP(req) {
   return (
     req.headers["x-real-ip"] ||
@@ -80,36 +56,6 @@ function getClientIP(req) {
     req.socket?.remoteAddress ||
     req.ip
   );
-}
-
-function pad(n) {
-  return String(n).padStart(2, "0");
-}
-function ts() {
-  const d = new Date();
-  const Y = d.getFullYear();
-  const M = pad(d.getMonth() + 1);
-  const D = pad(d.getDate());
-  const h = pad(d.getHours());
-  const m = pad(d.getMinutes());
-  const s = pad(d.getSeconds());
-  return `${Y}-${M}-${D} ${h}:${m}:${s}`;
-}
-
-function convDir(email, sessionId) {
-  return `${userDataFolder}/${email}/${sessionId}`;
-}
-function convFile(email, sessionId) {
-  return `${convDir(email, sessionId)}/conversation.txt`;
-}
-async function ensureConvDir(email, sessionId) {
-  const dir = convDir(email, sessionId);
-  await fsPromises.mkdir(dir, { recursive: true });
-  return dir;
-}
-async function appendConv(email, sessionId, line) {
-  const file = convFile(email, sessionId);
-  await fsPromises.appendFile(file, line + "\n");
 }
 
 // ==== Global access logger (optional) ====
@@ -155,18 +101,33 @@ app.use(vite.middlewares);
 app.use(async (req, res, next) => {
   const token = req.cookies["auth-token"];
   if (!token) return next();
+
+  const tokenHash = hashToken(token);
+
   try {
-    const sessions = await fsPromises.readFile(sessionFile, "utf-8");
-    const line = sessions.split("\n").find((l) => l.startsWith(token + ":"));
-    if (line) {
-      const [storedToken, email, sessionId] = line.trim().split(":", 3);
-      req.user = email;
-      req.sessionId = sessionId;
-      req.sessionToken = storedToken;
+    const { rows } = await pool.query(
+      `
+      SELECT
+        s.id AS session_id,
+        u.id AS user_id,
+        u.email
+      FROM sessions s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.token_hash = $1
+        AND s.expires_at > now()
+      `,
+      [tokenHash]
+    );
+
+    if (rows.length > 0) {
+      req.user = rows[0].email;
+      req.userId = rows[0].user_id;
+      req.sessionId = rows[0].session_id;
     }
   } catch (err) {
-    console.error("Session read error:", err);
+    console.error("Session restore error:", err);
   }
+
   next();
 });
 
@@ -188,62 +149,95 @@ app.use((req, res, next) => {
 // ==== Auth: login ====
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  try {
-    const userData = await fsPromises.readFile("./config/user.txt", "utf-8");
-    const users = userData
-      .split("\n")
-      .filter(Boolean)
-      .map((line) => {
-        const [u, hash] = line.trim().split(":");
-        return { email: u, hash };
-      });
+  const ip = getClientIP(req);
+  const ua = req.headers["user-agent"] || "?";
 
-    if (DEBUG) {
-      console.log("=== STORED USERS ===");
-      users.forEach((u, idx) => console.log(`[${idx}] email: "${u.email}", hash: "${u.hash}"`));
-      console.log("====================");
-      console.log("Login attempt:", { email, password });
+  if (!email || !password) {
+    return res.status(400).send("Missing email or password");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    const userRes = await client.query(
+      `SELECT id, email, password_hash FROM users WHERE email = $1`,
+      [email]
+    );
+    
+    if (userRes.rowCount === 0) {
+      return res.status(401).send("Invalid email or password");
     }
 
-    const user = users.find((u) => u.email === email);
-    if (!user) return res.status(401).send("Invalid email or password");
+    const user = userRes.rows[0];
 
-    const match = await bcrypt.compare(password, user.hash.replace("$2y$", "$2b$"));
-    if (!match) return res.status(401).send("Invalid email or password");
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) {
+      return res.status(401).send("Invalid email or password");
+    }
 
     const token = crypto.randomBytes(32).toString("hex");
-    const sessionId = crypto.randomUUID().toString();
+    const tokenHash = hashToken(token);
+    const sessionId = crypto.randomUUID();
+
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await client.query(
+      `
+      INSERT INTO sessions
+        (id, user_id, token_hash, ip_address, user_agent, expires_at)
+      VALUES
+        ($1, $2, $3, $4, $5, $6)
+      `,
+      [
+        sessionId,
+        user.id,
+        tokenHash,
+        ip,
+        ua,
+        expiresAt,
+      ]
+    );
+
     if (DEBUG)
       console.log(`✅ Login ok for "${email}". token=${token} sessionId=${sessionId}`);
 
-    await fsPromises.appendFile(sessionFile, `${token}:${email}:${sessionId}\n`);
-
-    // Ensure user/session directories exist
-    if (!fs.existsSync(`${userDataFolder}/${email}`)) {
-      if (DEBUG) console.log(`Making a logging folder for ${email}!`);
-      fs.mkdirSync(`${userDataFolder}/${email}`);
-    }
-    if (!fs.existsSync(`${userDataFolder}/${email}/${sessionId}`)) {
-      if (DEBUG) console.log(`Making a logging folder for ${sessionId}!`);
-      fs.mkdirSync(`${userDataFolder}/${email}/${sessionId}`);
-    }
-
     res.cookie("auth-token", token, {
       httpOnly: true,
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     await logUserActivity({
       email,
       action: "logged in",
-      ip: getClientIP(req),
-      ua: req.headers["user-agent"],
+      ip,
+      ua,
     });
+
+    const userId = user.id;
+
+    await logAccessDB({
+      userId,
+      action: "login",
+      ip,
+      ua,
+    });
+
+
+    if (DEBUG) {
+      console.log("Login success:", {
+        userId: user.id,
+        email,
+        sessionId,
+      });
+    }
 
     res.redirect("/");
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).send("Internal server error");
+  } finally {
+    client.release();
   }
 });
 
@@ -255,111 +249,124 @@ app.get("/api/me", (req, res) => {
 
 // ==== Per-session conversation logging ====
 app.post("/log-voice-session", express.json(), async (req, res) => {
-  const token = req.cookies["auth-token"];
-  if (!token) return res.status(401).json({ error: "Not authenticated" });
+  if (!req.userId || !req.sessionId)
+    return res.status(401).json({ error: "Not authenticated" });
 
   const { action, duration = 0 } = req.body;
+  const ip = getClientIP(req);
+  const ua = req.headers["user-agent"] || "?";
 
   try {
-    const sessions = await fsPromises.readFile(sessionFile, "utf-8");
-    const line = sessions.split("\n").find((l) => l.startsWith(token + ":"));
-    if (!line) return res.status(403).json({ error: "Invalid session" });
-
-    const [storedToken, email, sessionId] = line.trim().split(":", 3);
-    const ip = getClientIP(req);
-    const ua = req.headers["user-agent"] || "?";
-    const timestampISO = new Date().toISOString();
-
-    // Global access log
-    const accessLogEntry =
-      action === "start"
-        ? `[${timestampISO}] 🟢 ${email} (${sessionId}) started a voice session from ${ip}`
-        : `[${timestampISO}] 🔴 ${email} (${sessionId}) ended voice session after ${duration}s from ${ip}`;
-    await fsPromises.appendFile(logsFile, accessLogEntry + "\n");
-    if (DEBUG) console.log(accessLogEntry);
-
-    // Per-session conversation log
-    await ensureConvDir(email, sessionId);
-
     if (action === "start") {
-      const header = [
-        `${PROJECT_NAME} ${PROJECT_VERSION}`,
-        `Client: ${ua}`,
-        `User: ${email}`,
-        `----`,
-        `${ts()} INFO: Conversation started`,
-      ].join("\n");
-      await appendConv(email, sessionId, header);
-    } else {
-      await appendConv(
-        email,
-        sessionId,
-        `${ts()} INFO: Conversation finished with ${duration}s\n`
+      await pool.query(
+        `
+        INSERT INTO voice_sessions
+          (id, session_id, user_id, started_at, ip_address, user_agent)
+        VALUES
+          ($1, $2, $3, now(), $4, $5)
+        `,
+        [
+          crypto.randomUUID(),
+          req.sessionId,
+          req.userId,
+          ip,
+          ua,
+        ]
       );
     }
 
-    res.status(200).json({ success: true });
+    if (action === "end") {
+      await pool.query(
+        `
+        UPDATE voice_sessions
+        SET
+          ended_at = now(),
+          duration_sec = $1
+        WHERE session_id = $2
+          AND ended_at IS NULL
+        `,
+        [duration, req.sessionId]
+      );
+    }
+
+    res.json({ success: true });
   } catch (err) {
-    console.error("Voice session log error:", err);
-    res.status(500).json({ error: "Failed to log session" });
+    console.error("Voice session DB log error:", err);
+    res.status(500).json({ error: "Failed to log voice session" });
   }
 });
 
 // Log arbitrary utterances (SYSTEM / USER / INFO)
 app.post("/conversation/log", express.json(), async (req, res) => {
-  const token = req.cookies["auth-token"];
-  if (!token) return res.status(401).json({ error: "Not authenticated" });
+  if (!req.userId || !req.sessionId)
+    return res.status(401).json({ error: "Not authenticated" });
 
   const { role = "SYSTEM", text = "" } = req.body;
-  if (!text || !String(text).trim()) return res.status(400).json({ error: "Empty text" });
+  if (!text.trim())
+    return res.status(400).json({ error: "Empty text" });
 
   try {
-    const sessions = await fsPromises.readFile(sessionFile, "utf-8");
-    const line = sessions.split("\n").find((l) => l.startsWith(token + ":"));
-    if (!line) return res.status(403).json({ error: "Invalid session" });
+    const { rows } = await pool.query(
+      `
+      SELECT id
+      FROM voice_sessions
+      WHERE session_id = $1
+      ORDER BY started_at DESC
+      LIMIT 1
+      `,
+      [req.sessionId]
+    );
 
-    const [, email, sessionId] = line.trim().split(":", 3);
-    const safeRole = String(role).toUpperCase();
-    const prefix =
-      safeRole === "SYSTEM" ? "SYSTEM" : safeRole === "USER" ? "USER" : "INFO";
+    if (rows.length === 0)
+      return res.status(400).json({ error: "No active voice session" });
 
-    await ensureConvDir(email, sessionId);
-    await appendConv(
-      email,
-      sessionId,
-      `${ts()} ${prefix}: ${String(text).replace(/\r?\n/g, " ").trim()}`
+    const voiceSessionId = rows[0].id;
+
+    await pool.query(
+      `
+      INSERT INTO conversation_messages
+        (voice_session_id, user_id, role, message)
+      VALUES
+        ($1, $2, $3, $4)
+      `,
+      [
+        voiceSessionId,
+        req.userId,
+        role.toUpperCase(),
+        text.trim(),
+      ]
     );
 
     res.json({ success: true });
-  } catch (e) {
-    console.error("conversation/log error:", e);
-    res.status(500).json({ error: "Failed to write conversation log" });
+  } catch (err) {
+    console.error("Conversation DB log error:", err);
+    res.status(500).json({ error: "Failed to log conversation" });
   }
 });
 
 // ==== Logout ====
 app.post("/logout", async (req, res) => {
   const token = req.cookies["auth-token"];
+
   if (token) {
-    try {
-      const data = await fsPromises.readFile(sessionFile, "utf-8");
-      const filtered = data
-        .split("\n")
-        .filter((line) => !line.startsWith(token + ":"))
-        .join("\n");
-      await fsPromises.writeFile(sessionFile, filtered);
-    } catch (e) {
-      console.error("Logout error:", e);
-    }
+    const tokenHash = hashToken(token);
+    await pool.query(
+      `DELETE FROM sessions WHERE token_hash = $1`,
+      [tokenHash]
+    );
   }
 
   res.clearCookie("auth-token");
-  await logUserActivity({
-    email: req.user || "Unknown",
-    action: "logged out",
-    ip: getClientIP(req),
-    ua: req.headers["user-agent"],
-  });
+
+
+  if (req.userId) {
+    await logAccessDB({
+      userId: req.userId,
+      action: "logout",
+      ip: getClientIP(req),
+      ua: req.headers["user-agent"],
+    });
+  }
 
   res.redirect("/login");
 });
@@ -420,5 +427,54 @@ app.use("*", async (req, res, next) => {
 
 // ==== Start server ====
 app.listen(port, () => {
+  process.stdin.setEncoding("utf8");
+  console.log(`:evelyn01: ${PROJECT_NAME} v${PROJECT_VERSION} is starting...`);
   console.log(`✅ Express server running on http://localhost:${port}`);
+  console.log('Type "help" to see all availables commands!');
+
+  process.stdin.on("data", async (input) => {
+    const line = input.trim();
+    if (!line) return;
+
+    const [command, ...args] = line.split(/\s+/);
+
+    try {
+      switch (command.toLowerCase()) {
+        case "help":
+          console.log("Available commands:");
+          console.log(" - adduser <email> <password>");
+          console.log(" - deleteuser <email>");
+          console.log(" - resetpassword <email> <newpassword>");
+          break;
+        case "adduser":
+          if (args.length !== 2) {
+            console.log("Usage: adduser <email> <password>");
+            break;
+          }
+          const addMsg = await addUser(args[0], args[1]);
+          console.log(addMsg);
+          break;
+        case "deleteuser":
+          if (args.length !== 1) {
+            console.log("Usage: deleteuser <email>");
+            break;
+          }
+          const delMsg = await deleteUser(args[0]);
+          console.log(delMsg);
+          break;
+        case "resetpassword":
+          if (args.length !== 2) {
+            console.log("Usage: resetpassword <email> <newpassword>");
+            break;
+          }
+          const resetMsg = await resetPassword(args[0], args[1]);
+          console.log(resetMsg);
+          break;
+        default:
+          console.log(`Unknown command: ${command}`);
+      }
+    } catch (err) {
+      console.error(`Error executing command "${command}":`, err.message);
+    }
+  });
 });

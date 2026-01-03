@@ -20,7 +20,7 @@ The vocal conversation parts will be working with OpenAI's Realtime API services
 
 ## Usage
 
-_Before you begin, you'll need an OpenAI API key - [create one in the dashboard here](https://platform.openai.com/settings/api-keys)._
+_Before you begin, you'll need an OpenAI API key - [create one in the dashboard here](https://platform.openai.com/settings/api-keys). You'll also need to have PostgreSQL installed._
 
 Clone this repo
 
@@ -36,10 +36,11 @@ OPENAI_API_KEY=<your_openai_api_key>
 DEBUG=<True OR False>
 VITE_ALLOWED_HOSTS=localhost,127.0.0.1
 LOGGING=<True OR False>
+DATABASE_URL=postgresql://username:password@localhost:5432/databasename
 // Example
 ```
 
-Running this application locally requires [Node.js](https://nodejs.org/) to be installed. Install dependencies for the application with:
+Running this application locally requires [Node.js](https://nodejs.org/) and PostgreSQL to be installed. Install dependencies for the application with:
 
 ```bash
 npm install
