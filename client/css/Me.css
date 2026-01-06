@@ -1,0 +1,127 @@
+.user-avatar-me {
+    border-radius: 50%;
+    border: 4px solid white;
+    animation: popIn 0.4s ease;
+}
+
+.me-box {
+    width: 450px;
+    height: 727px;
+    /* border: 1px solid #ccc; */
+    /* border-radius: 30px; */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* background: white; */
+    /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); */
+    position: relative;
+    padding: 0;
+    box-sizing: border-box;
+    gap: 15px;
+}
+
+.pill {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 9999px;
+    /* background: rgba(218, 193, 229, 0.25); */
+    color: #613583FF;
+    background: #8478ae40;
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.skill-text {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.pill-progress {
+    width: 380px;
+    height: 13px;
+    background: #9a999640;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.pill-fill {
+    height: 100%;
+    background: #8478aeFF;
+    border-radius: 9999px 0 0 9999px;
+    transition: width 0.4s ease;
+}
+
+.gnome-looking-option-selector {
+    width: 380px;
+    height: 70px;
+    /* background: #ffffffFF; */
+    background: #8478aeFF;
+    color: white;
+    box-shadow: 0px 1px 4px 1px #00000021;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    box-sizing: border-box;
+    margin-top: 12px;
+}
+
+.option-left, .option-right {
+    display: inline-block;
+    margin-left: 100px;
+}
+
+
+.gtk-logout {
+    width: 150px;
+    height: 44px;
+    border-radius: 22px;
+    background: #e01b24FF;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    box-sizing: border-box;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: transform 0.2s ease;
+}
+
+.gtk-logout:hover {
+    transform: scale(1.05);
+}
+
+@media (max-width: 480px) {
+    .pill {
+        padding: 10px 24px;
+        font-size: 16px;
+    }
+
+    .pill-progress, 
+    .gnome-looking-option-selector {
+        width: 380px;
+        max-width: 330px;
+    }
+
+    .gnome-looking-option-selector {
+        height: 85px;
+        padding: 0 20px;
+    }
+
+    .option-right-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}

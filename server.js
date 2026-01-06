@@ -172,7 +172,7 @@ app.use(async (req, res, next) => {
 
 // ==== Route protection (public allow-list) ====
 app.use((req, res, next) => {
-  const publicPaths = ["/login", "/register", "/email", "/config"];
+  const publicPaths = ["/login", "/register", "/email", "/config", "/me"];
   const isPublic =
     publicPaths.some((path) => req.path.startsWith(path)) ||
     req.method === "OPTIONS" ||
