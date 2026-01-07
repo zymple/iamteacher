@@ -84,8 +84,8 @@ body {
   font-size: 22pt;
   font-weight: 700;
   color: white;
-  width: 8cm;
-  height: 2cm;
+  width: 380px;
+  height: 70px;
   border: none;
   border-radius: 9999px;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
@@ -104,6 +104,28 @@ body {
   background-color: #2563eb;
 }
 
+.cb-svg {
+  margin-left: 15px;
+}
+.cb-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  margin-left: 0;
+  width: 100%;
+  line-height: 1.1;
+}
+
+.cb-title {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.cb-desc {
+  font-size: 13px;
+  font-weight: 500;
+  opacity: 0.85;
+}
 
 @keyframes fadeIn {
   from {

@@ -18,7 +18,26 @@
             "total_time": "Total time"
         },
 
-        "conversation": "Conversation",
+        "conversation": {
+            "title": "Conversation",
+            "description": "Practice real-world speaking."
+        },
+
+        "vocabulary": {
+            "title": "Vocabulary",
+            "description": "Learn and memorize new words."
+        },
+
+        "writing": {
+            "title": "Writing",
+            "description": "Gain experience writing things."
+        },
+
+        "reading": {
+            "title": "Reading",
+            "description": "Read stories & answer questions."
+        },
+
         "logout": "Logout",
         "tutor-description": "Improve your English while still having fun!",
 

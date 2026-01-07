@@ -50,9 +50,12 @@
 /* mobile optimization  */
 @media (max-width: 480px) {
     .navigation-bottom {
-        bottom: 10px;
+        bottom: 0px;
         height: 65px;
-        border-radius: 15px;
+        border-radius: 0px;
+        width: 100vw;
+        max-width: 100vw;
+        
     }
 
     .navigation-button img {

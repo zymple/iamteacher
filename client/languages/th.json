@@ -18,7 +18,26 @@
             "total_time": "เวลาทั้งหมด"
         },
 
-        "conversation": "บทสนทนา",
+        "conversation": {
+            "title": "บทสนทนา",
+            "description": "Practice real-world speaking."
+        },
+
+        "vocabulary": {
+            "title": "Vocabulary",
+            "description": "Learn and memorize new words."
+        },
+
+        "writing": {
+            "title": "Writing",
+            "description": "Gain experience writing things."
+        },
+
+        "reading": {
+            "title": "Reading",
+            "description": "Read stories & answer questions."
+        },
+        
         "logout": "ออกจากระบบ",
         "tutor-description": "Improve your English while still having fun!",
 

@@ -1,0 +1,42 @@
+{
+    "beginner": {
+        "1": {
+            "title": "Your favorite food",
+            "promopt": "ai prompt here",
+            "score": 200,
+            "length": "2 mins"
+        },
+        "2": {
+            "title": "Going to school",
+            "promopt": "ai prompt here",
+            "score": 200,
+            "length": "2 mins"
+        }
+    },
+    "intermediate": {
+        "1": {
+            "title": "Favorite video game",
+            "promopt": "ai prompt here",
+            "score": 300,
+            "length": "3 mins"
+        },
+        "2": {
+            "title": "Going abroad",
+            "promopt": "ai prompt here",
+            "score": 300,
+            "length": "3 mins"
+        },
+        "3": {
+            "title": "Dream career",
+            "promopt": "ai prompt here",
+            "score": 300,
+            "length": "3 mins"
+        },
+        "4": {
+            "title": "Yesterday's movie",
+            "promopt": "ai prompt here",
+            "score": 300,
+            "length": "3 mins"
+        }
+    }
+}
