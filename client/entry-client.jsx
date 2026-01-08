@@ -9,6 +9,7 @@ import EmailLogin from "./pages/email_login";
 import Conversation from "./pages/Conversation";
 import NotFound from './pages/NotFound.jsx'
 import MePage from "./pages/MePage";
+import LessonPage from "./pages/LessonPage";
 
 const container = document.getElementById("root");
 
@@ -23,6 +24,7 @@ createRoot(container).render(
         <Route path="/register" element={<Register />} />
         <Route path="/" element={<App />} />
         <Route path="/me" element={<MePage />} />
+        <Route path="/lesson" element={<LessonPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/email" element={<EmailLogin />} />
         <Route path="/conversation" element={<Conversation />} />

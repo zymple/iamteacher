@@ -9,7 +9,7 @@ export const Contents = ({ children }) => {
         const locale = userLocale.split("-")[0]; // e.g. "en", "th"
 
         // load english first
-        import("../languages/en.json")
+        import("../contents/en.json")
         .then((module) => {
             setEnContents(module.default);
 
@@ -37,8 +37,8 @@ export const Contents = ({ children }) => {
     };
 
     // Try user locale first, then fallback to English
-    let text = getText(translations);
-    if (text === undefined) text = getText(enTranslations);
+    let text = getText(contents);
+    if (text === undefined) text = getText(enContents);
     if (text === undefined) text = children; // fallback if missing in both
 
     return text;

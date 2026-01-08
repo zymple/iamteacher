@@ -1,5 +1,5 @@
 .home-information-box {
-    width: 390px;
+    width: 350px;
     height: 200px;
     border: 1px solid #ccc;
     border-radius: 30px;
@@ -15,7 +15,7 @@
 }
 
 .alt {
-    font-size: 18px;
+    font-size: 15px;
     /* color: #b7a6d4; */
     color: white;
 }
@@ -155,14 +155,25 @@
 }
 
 .back {
-    margin-bottom: 10px;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    margin-right: 250px;
-    align-items: left;
-    justify-content: left;
+    position: absolute;       /* stays on top layer */
+    top: 16px;                /* distance from top */
+    left: 16px;               /* distance from left */
+    display: flex;            
+    align-items: center;      /* vertical center of icon */
+    justify-content: center;  /* horizontal center of icon */
+    width: 40px;              /* tappable area */
+    height: 40px;             /* tappable area */
     cursor: pointer;
-    top: 2%;
-    position: absolute;
+    margin: 0;                
+    padding: 0;
+    z-index: 100;             /* ensures it’s above content */
+}
+
+@media (max-width: 420px) {
+    .back {
+        top: 12px;
+        left: 12px;
+        width: 36px;
+        height: 36px;
+    }
 }
