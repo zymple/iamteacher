@@ -155,25 +155,33 @@
 }
 
 .back {
-    position: absolute;       /* stays on top layer */
-    top: 16px;                /* distance from top */
-    left: 16px;               /* distance from left */
-    display: flex;            
-    align-items: center;      /* vertical center of icon */
-    justify-content: center;  /* horizontal center of icon */
-    width: 40px;              /* tappable area */
-    height: 40px;             /* tappable area */
-    cursor: pointer;
-    margin: 0;                
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
     padding: 0;
-    z-index: 100;             /* ensures it’s above content */
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #2e3436;
+    cursor: pointer;
+    z-index: 9999;
+    line-height: 0;
 }
 
-@media (max-width: 420px) {
-    .back {
-        top: 12px;
-        left: 12px;
-        width: 36px;
-        height: 36px;
-    }
+
+.back svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.back:hover {
+    background: rgba(255, 255, 255, 1);
+}
+
+.back:active {
+    transform: scale(0.95);
 }

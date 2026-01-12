@@ -173,12 +173,6 @@
     .exp-box p {
         font-size: 14px;
     }
-    .back {
-        top: 12px;
-        left: 12px;
-        width: 36px;
-        height: 36px;
-    }
 }
 
 @media (width: 375px) {
@@ -217,10 +211,31 @@
     .exp-box p {
         font-size: 14px;
     }
+}
+
+@media (max-height: 854px) {
+    .level-header { 
+        margin-top: 30px; 
+    }
+}
+
+@media (max-height: 800px) {
+    .level-header { 
+        margin-top: 80px; 
+    }
+}
+
+@media (max-height: 812px) {
+    .level-header { 
+        margin-top: -20px; 
+    }
+}
+
+@media (max-height: 760px) {
     .back {
-        top: 12px;
-        left: 12px;
-        width: 36px;
-        height: 36px;
+        margin-top: 70px
+    }
+    .level-header { 
+        margin-top: 60px; 
     }
 }

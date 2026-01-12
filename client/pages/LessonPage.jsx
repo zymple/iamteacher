@@ -26,9 +26,7 @@ export default function Conversation() {
 
     return (
         <div className="app-container">
-            <div className="page-header">
-                <BackButton />
-            </div>
+            <BackButton />
             <div className="level-header">
                 <p className="level-text">Lv.1</p>
 
