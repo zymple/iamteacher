@@ -422,12 +422,11 @@ export default function Conversation() {
 
   return (
     <div className="app-container">
-      <BackButton />
-      <div className="page-title">
-        <strong>iAmTeacher - Yesterday&apos;s movie</strong>
-      </div>
-
       <div className="scene-wrapper">
+        <BackButton />
+        <div className="page-title">
+          <strong>iAmTeacher - Yesterday&apos;s movie</strong>
+        </div>
         <img src="/assets/tutor_f.png" alt="Tutor Avatar" className="avatar" />
         <DialogueBox aiReply={aiReply} />
         <ControlButton
@@ -446,8 +445,7 @@ export default function Conversation() {
         />
       </div>
 
-      <Navigation />
-      <AlertBox open={alertOpen} text={alertText} onClose={closeAlert} detectInAppBrowser={detectInAppBrowser}/>
+      <AlertBox open={alertOpen} text={alertText} onClose={closeAlert} detectInAppBrowser={detectInAppBrowser} />
     </div>
   );
 }
