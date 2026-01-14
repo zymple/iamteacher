@@ -12,7 +12,7 @@ steps:
       - rm -rf /mnt/caddy-sites/ai-tutor-poc.techtransthai.org/*
       - cp -r dist/* /mnt/caddy-sites/ai-tutor-poc.techtransthai.org/
     volumes:
-      - /media/core/Data1/Apps/caddy/sites:/mnt/caddy-sites
+      - /home/core/Data1/Apps/caddy/sites:/mnt/caddy-sites
     environment:
       VITE_OPENAI_API_KEY:
         from_secret: VITE_OPENAI_API_KEY
