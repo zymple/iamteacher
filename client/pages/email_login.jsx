@@ -24,7 +24,8 @@ function EmailLogin() {
           setTimeout(() => {
             callback(container.textContent);
             document.body.removeChild(container); // clean up
-          }, 50); // tiny delay to ensure render
+          }, 200); // tiny delay to ensure render
+                   // sometimes the delat isn't enough so it's 200 miliseconds now.
         });
       });
     };

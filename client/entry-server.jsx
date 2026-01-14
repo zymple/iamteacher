@@ -8,6 +8,8 @@ import Register from "./pages/register";
 import EmailLogin from "./pages/email_login";
 import Conversation from "./pages/Conversation";
 import NotFound from './pages/NotFound.jsx'
+import MePage from "./pages/MePage";
+import LessonPage from "./pages/LessonPage";
 
 // note, to add new endpoint. you need to edit entry-server.jsx and entry-client.jsx
 // if you want the path to be public, go edit server.js at line 39
@@ -21,6 +23,8 @@ export function render(url) {
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<App />} />
+          <Route path="/me" element={<MePage />} />
+          <Route path="/lesson" element={<LessonPage />} />
           <Route path="/conversation" element={<Conversation />} />
           <Route path="/email" element={<EmailLogin />} />
           <Route path="*" element={<NotFound />} />  {/* catch-all 404 */}

@@ -1,5 +1,5 @@
 .home-information-box {
-    width: 390px;
+    width: 350px;
     height: 200px;
     border: 1px solid #ccc;
     border-radius: 30px;
@@ -15,8 +15,9 @@
 }
 
 .alt {
-    font-size: 18px;
-    color: #b7a6d4;
+    font-size: 15px;
+    /* color: #b7a6d4; */
+    color: white;
 }
 
 .main {
@@ -61,7 +62,7 @@
 
 .status-box {
     width: 226px;
-    height: 270px;
+    height: 233px;
     border: 1px solid #ccc;
     border-radius: 30px;
     display: flex;
@@ -71,7 +72,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     position: relative;
     z-index: 1;
-    margin-top: -50px;
+    margin-top: 20px;
     margin-left: -120px;
     padding: 15px;
     gap: 15px;
@@ -121,6 +122,23 @@
     width: 100%;
 }
 
+.status-wrapper {
+    position: relative;
+}
+
+.teacher-home-page {
+    position: absolute;
+    right: -220px;
+    top: -65px;
+}
+
+.teacher-image {
+    width: 357px;
+    height: 357px;
+    object-fit: contain;
+}
+
+
 .status-title-text {
     font-size: 20px;
     font-weight: bold;
@@ -131,19 +149,39 @@
 
 .logout {
     margin-bottom: 30px;
-    background-color: transparent!important;
-    box-shadow: none!important;
-    color: #2F4971!important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    color: #2F4971 !important;
 }
+
 .back {
-    margin-bottom: 10px;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    margin-right: 250px;
-    align-items: left;
-    justify-content: left;
-    cursor: pointer;
-    top: 2%;
     position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #2e3436;
+    cursor: pointer;
+    z-index: 9999;
+    line-height: 0;
+}
+
+
+.back svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.back:hover {
+    background: rgba(255, 255, 255, 1);
+}
+
+.back:active {
+    transform: scale(0.95);
 }

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import logo from "/assets/openai-logomark.svg";
 import "../css/App.css";
 import Navigation from "../components/Navigation";
 import BackButton from "../components/conversation/BackButton";
 import ControlButton from "../components/conversation/ControlButton";
 import DialogueBox from "../components/conversation/DialogueBox";
 import StatusDisplay from "../components/conversation/StatusDisplay";
+import AlertBox from "../components/conversation/AlertBox";
+import { Translate } from "../languages/TranslationsManager";
 
 // Fallback UUID for very old browsers
 function uuid() {
@@ -166,7 +167,7 @@ export default function Conversation() {
   const ensureMicrophoneReady = async () => {
     if (detectInAppBrowser()) {
       openAlert(
-        "It looks like you're using an in-app browser (e.g., LINE/Instagram). Microphone access might not work here.\n\nPlease open this page in your external browser (Chrome/Safari/Firefox) and try again."
+        <Translate>error.in_app_browser</Translate>
       );
       return null;
     }
@@ -176,7 +177,7 @@ export default function Conversation() {
         const status = await navigator.permissions.query({ name: "microphone" });
         if (status.state === "denied") {
           openAlert(
-            "Microphone permission is blocked.\n\nPlease enable microphone access in your browser settings for this site, then reload."
+            <Translate>error.microphone_permission_blocked</Translate>
           );
           return null;
         }
@@ -192,7 +193,7 @@ export default function Conversation() {
       if (!live) {
         stream.getTracks().forEach((t) => t.stop());
         openAlert(
-          "Microphone was acquired but not producing audio.\n\nPlease check your input device and try again."
+          <Translate>error.microphone_aquired_but_no_audio</Translate>
         );
         return null;
       }
@@ -201,11 +202,11 @@ export default function Conversation() {
     } catch (err) {
       const name = err?.name || "";
       if (name === "NotAllowedError") {
-        openAlert("Microphone permission was denied.\n\nPlease allow microphone access and try again.");
+        openAlert(<Translate>error.microphone_permission_denied</Translate>);
       } else if (name === "NotFoundError" || name === "OverconstrainedError") {
-        openAlert("No microphone was found or the selected input is unavailable.\n\nPlease plug in a mic or choose a different input device.");
+        openAlert(<Translate>error.microphone_not_found</Translate>);
       } else {
-        openAlert(`Failed to access microphone.\n\n${String(err?.message || err)}`);
+        openAlert(`${<Translate>error.microphone_failed_to_access_generic</Translate>}${String(err?.message || err)}`);
       }
       return null;
     }
@@ -421,12 +422,11 @@ export default function Conversation() {
 
   return (
     <div className="app-container">
-      <BackButton />
-      <div className="page-title">
-        <strong>iAmTeacher - Yesterday&apos;s movie</strong>
-      </div>
-
       <div className="scene-wrapper">
+        <BackButton />
+        <div className="page-title">
+          <strong>iAmTeacher - Yesterday&apos;s movie</strong>
+        </div>
         <img src="/assets/tutor_f.png" alt="Tutor Avatar" className="avatar" />
         <DialogueBox aiReply={aiReply} />
         <ControlButton
@@ -445,59 +445,7 @@ export default function Conversation() {
         />
       </div>
 
-      <Navigation />
-
-      {/* Minimal modal */}
-      {alertOpen && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
-          }}
-          onClick={closeAlert}
-        >
-          <div
-            style={{
-              background: "#fff",
-              padding: "16px 18px",
-              borderRadius: 12,
-              maxWidth: 480,
-              width: "90%",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.2)",
-              whiteSpace: "pre-wrap",
-              lineHeight: 1.4,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>Heads up</div>
-            <div style={{ fontSize: 14 }}>{alertText}</div>
-            <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
-              <button
-                onClick={() => {
-                  if (detectInAppBrowser()) {
-                    window.open(window.location.href, "_blank");
-                  }
-                  closeAlert();
-                }}
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 8,
-                  border: "1px solid #ddd",
-                  background: "#f9f9f9",
-                  cursor: "pointer",
-                }}
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AlertBox open={alertOpen} text={alertText} onClose={closeAlert} detectInAppBrowser={detectInAppBrowser} />
     </div>
   );
 }

@@ -24,7 +24,7 @@ body {
   font-weight: 600;
   color: white;
   width: 10cm;
-  height: 2cm;
+  height: 70px;
   border: none;
   border-radius: 20px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
@@ -137,7 +137,7 @@ body {
   .control-button {
     font-size: 12pt;
     width: 90vw;
-    height: 1.8cm;
+    height: 70px;
     padding: 0.4rem 0.5rem;
   }
 }
