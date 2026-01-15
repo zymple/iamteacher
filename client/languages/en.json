@@ -44,7 +44,7 @@
         "speak_screen": {
             "start_call": "Start Call",
             "end_call": "End Call",
-            "waiting_for_question": "Waiting for your question.",
+            "waiting_for_question": "I'm ready. Press Start Call and say hi!",
             "duration": "Duration:"
         },
 

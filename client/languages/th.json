@@ -44,7 +44,7 @@
         "speak_screen": {
             "start_call": "เริ่มการโทร",
             "end_call": "วางสาย",
-            "waiting_for_question": "กำลังรอคำถามของคุณ",
+            "waiting_for_question": "ครูพร้อมแล้ว กดเริ่มการโทรแล้วสวัสดีได้เลย",
             "duration": "ระยะเวลาการโทร:"
         },
 
