@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+package.json
 
 # temp
 tts/
@@ -38,3 +39,4 @@ logs*
 
 # Database
 *.db*
+config

@@ -93,6 +93,39 @@ export function stmts() {
       LIMIT ?
     `),
 
+    // ---- token usage ----
+    insertTokenUsage: db.prepare(
+      "INSERT INTO token_usage (email, session_id, input_tokens, output_tokens) VALUES (?, ?, ?, ?)"
+    ),
+    getSessionTokens: db.prepare(`
+      SELECT
+        COALESCE(SUM(input_tokens), 0)  AS total_input,
+        COALESCE(SUM(output_tokens), 0) AS total_output
+      FROM token_usage WHERE session_id = ?
+    `),
+    getUserTokens: db.prepare(`
+      SELECT
+        COALESCE(SUM(input_tokens), 0)  AS total_input,
+        COALESCE(SUM(output_tokens), 0) AS total_output
+      FROM token_usage WHERE email = ?
+    `),
+    getAllUserTokens: db.prepare(`
+      SELECT
+        email,
+        COUNT(DISTINCT session_id) AS sessions,
+        COALESCE(SUM(input_tokens), 0)  AS total_input,
+        COALESCE(SUM(output_tokens), 0) AS total_output
+      FROM token_usage
+      GROUP BY email
+      ORDER BY total_input + total_output DESC
+    `),
+    getGlobalTokens: db.prepare(`
+      SELECT
+        COALESCE(SUM(input_tokens), 0)  AS total_input,
+        COALESCE(SUM(output_tokens), 0) AS total_output
+      FROM token_usage
+    `),
+
     // ---- access logs ----
     insertAccess: db.prepare(
       "INSERT INTO access_logs (email, action, ip, user_agent) VALUES (?, ?, ?, ?)"

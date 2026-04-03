@@ -26,6 +26,38 @@ router.get(
   }
 );
 
+// GET /api/teacher/tokens — usage per student
+router.get(
+  "/api/teacher/tokens",
+  requireRole("teacher", "admin"),
+  (req, res) => {
+    const perUser = stmts().getAllUserTokens.all();
+    const global = stmts().getGlobalTokens.get();
+    res.json({ global, perUser });
+  }
+);
+
+// GET /api/teacher/tokens/:email — usage for one student
+router.get(
+  "/api/teacher/tokens/:email",
+  requireRole("teacher", "admin"),
+  (req, res) => {
+    const totals = stmts().getUserTokens.get(req.params.email);
+    const sessions = getDb()
+      .prepare(`
+        SELECT session_id,
+          SUM(input_tokens) AS input_tokens,
+          SUM(output_tokens) AS output_tokens,
+          MIN(created_at) AS first_use,
+          MAX(created_at) AS last_use
+        FROM token_usage WHERE email = ?
+        GROUP BY session_id ORDER BY last_use DESC
+      `)
+      .all(req.params.email);
+    res.json({ email: req.params.email, totals, sessions });
+  }
+);
+
 // ============================================================
 //  SINGLE STUDENT STATS
 //  GET /api/teacher/students/:email

@@ -2,6 +2,7 @@ import { Router } from "express";
 import fs from "fs";
 import { logAccess, logConversation } from "../utils/logger.js";
 import { getClientIP } from "../utils/ip.js";
+import { stmts } from "../db/statements.js";
 
 const router = Router();
 
@@ -35,6 +36,29 @@ router.post("/log-voice-session", (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+// ---- Log token usage from a response.done event ----
+router.post("/conversation/tokens", (req, res) => {
+  if (!req.user) return res.status(401).json({ error: "Not authenticated" });
+
+  const { input_tokens = 0, output_tokens = 0 } = req.body;
+  if (!input_tokens && !output_tokens) {
+    return res.status(400).json({ error: "No token data" });
+  }
+
+  try {
+    stmts().insertTokenUsage.run(
+      req.user,
+      req.sessionId,
+      Number(input_tokens),
+      Number(output_tokens)
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Token log error:", err);
+    res.status(500).json({ error: "Failed to log tokens" });
+  }
 });
 
 // ---- Log arbitrary utterance (SYSTEM / USER / INFO) ----

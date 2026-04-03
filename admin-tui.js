@@ -104,8 +104,8 @@ async function mainMenu() {
   console.log(chalk.gray("  Type the number of your choice and press Enter.\n"));
   console.log(chalk.white("  [1-5]  User Management"));
   console.log(chalk.white("  [6-9]  Student Progress"));
-  console.log(chalk.white("  [10-12] Logs"));
-  console.log(chalk.white("  [13]   Exit\n"));
+  console.log(chalk.white("  [10-13] Logs & Usage"));
+  console.log(chalk.white("  [14]   Exit\n"));
 
   const { choice } = await inquirer.prompt([
     {
@@ -125,6 +125,7 @@ async function mainMenu() {
         { name: "Access logs", value: "access_logs" },
         { name: "Conversation logs", value: "conversation_logs" },
         { name: "Recent activity", value: "recent_activity" },
+        { name: "Token usage", value: "token_usage" },
         { name: chalk.red("Exit"), value: "exit" },
       ],
     },
@@ -870,6 +871,128 @@ async function recentActivity() {
 }
 
 // ============================================================
+//  TOKEN USAGE
+// ============================================================
+async function tokenUsage() {
+  clear();
+  header("Token Usage");
+
+  const global = db
+    .prepare(
+      `
+      SELECT COALESCE(SUM(input_tokens), 0) AS inp,
+             COALESCE(SUM(output_tokens), 0) AS out
+      FROM token_usage
+    `
+    )
+    .get();
+
+  console.log(chalk.bold(`\n  Global Total`));
+  console.log(`  Input tokens:   ${chalk.cyan(global.inp.toLocaleString())}`);
+  console.log(`  Output tokens:  ${chalk.cyan(global.out.toLocaleString())}`);
+  console.log(
+    `  Combined:       ${chalk.yellow((global.inp + global.out).toLocaleString())}\n`
+  );
+
+  const perUser = db
+    .prepare(
+      `
+      SELECT email,
+        COUNT(DISTINCT session_id) AS sessions,
+        SUM(input_tokens)  AS inp,
+        SUM(output_tokens) AS out
+      FROM token_usage GROUP BY email
+      ORDER BY inp + out DESC
+    `
+    )
+    .all();
+
+  if (perUser.length > 0) {
+    printTable(
+      ["Email", "Sessions", "Input", "Output", "Total"],
+      perUser.map((r) => [
+        r.email,
+        String(r.sessions),
+        r.inp.toLocaleString(),
+        r.out.toLocaleString(),
+        (r.inp + r.out).toLocaleString(),
+      ])
+    );
+
+    // Drill into a user?
+    const { drill } = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "drill",
+        message: "View per-session breakdown for a user?",
+        default: false,
+      },
+    ]);
+
+    if (drill) {
+      const { email } = await inquirer.prompt([
+        {
+          type: "rawlist",
+          name: "email",
+          message: "Select user:",
+          choices: perUser.map((r) => r.email),
+        },
+      ]);
+
+      const sessions = db
+        .prepare(
+          `
+          SELECT session_id,
+            SUM(input_tokens)  AS inp,
+            SUM(output_tokens) AS out,
+            MIN(created_at)    AS first_use,
+            MAX(created_at)    AS last_use
+          FROM token_usage WHERE email = ?
+          GROUP BY session_id ORDER BY last_use DESC
+        `
+        )
+        .all(email);
+
+      clear();
+      header(`Token Usage — ${email}`);
+
+      const userTotal = db
+        .prepare(
+          `SELECT COALESCE(SUM(input_tokens),0) AS inp,
+                  COALESCE(SUM(output_tokens),0) AS out
+           FROM token_usage WHERE email = ?`
+        )
+        .get(email);
+
+      console.log(`  Total input:   ${chalk.cyan(userTotal.inp.toLocaleString())}`);
+      console.log(`  Total output:  ${chalk.cyan(userTotal.out.toLocaleString())}`);
+      console.log(
+        `  Combined:      ${chalk.yellow((userTotal.inp + userTotal.out).toLocaleString())}\n`
+      );
+
+      if (sessions.length > 0) {
+        printTable(
+          ["Session ID", "Input", "Output", "Total", "First", "Last"],
+          sessions.map((s) => [
+            s.session_id.slice(0, 12) + "…",
+            s.inp.toLocaleString(),
+            s.out.toLocaleString(),
+            (s.inp + s.out).toLocaleString(),
+            s.first_use || "—",
+            s.last_use || "—",
+          ])
+        );
+      }
+    }
+  } else {
+    info("No token usage recorded yet.");
+    info("Token data appears after students have conversations.");
+  }
+
+  await pause();
+}
+
+// ============================================================
 //  APP LOOP
 // ============================================================
 async function run() {
@@ -912,6 +1035,9 @@ async function run() {
         break;
       case "recent_activity":
         await recentActivity();
+        break;
+      case "token_usage":
+        await tokenUsage();
         break;
       case "exit":
         db.close();
