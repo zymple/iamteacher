@@ -43,23 +43,6 @@ The response sets an `auth-token` httpOnly cookie valid for 7 days.
 
 ---
 
-### `POST /register`
-
-Create a new account (always `student` role).
-
-**Body:**
-```json
-{
-  "email": "newstudent@example.com",
-  "password": "secret123"
-}
-```
-
-**Success:** `302` redirect to `/login`  
-**Failure:** `409` `"User already exists"` or `400` `"Email and password required"`
-
----
-
 ### `POST /logout`
 
 Clear session and cookie.
@@ -688,7 +671,6 @@ Admin inherits all teacher permissions. A student can only access their own sess
 | Method   | Endpoint                                       | Role           |
 |----------|------------------------------------------------|----------------|
 | `POST`   | `/login`                                       | public         |
-| `POST`   | `/register`                                    | public         |
 | `POST`   | `/logout`                                      | any            |
 | `GET`    | `/api/me`                                      | any            |
 | `GET`    | `/config`                                      | public         |

@@ -40,26 +40,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ---- Register (student by default) ----
-router.post("/register", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).send("Email and password required");
-
-  try {
-    const existing = stmts().getUser.get(email);
-    if (existing) return res.status(409).send("User already exists");
-
-    const hash = await bcrypt.hash(password, 10);
-    stmts().insertUser.run(email, hash, "student");
-
-    logAccess(email, "registered", getClientIP(req), req.headers["user-agent"]);
-    res.redirect("/login");
-  } catch (err) {
-    console.error("Register error:", err);
-    res.status(500).send("Internal server error");
-  }
-});
-
 // ---- Me ----
 router.get("/api/me", (req, res) => {
   if (!req.user) return res.status(401).json({ error: "Not authenticated" });
