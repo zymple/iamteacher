@@ -55,10 +55,10 @@ Create a `.env` file from the example and set your values (see `.env.example`):
 
 ```bash
 OPENAI_API_KEY=<your_openai_api_key>
-DEBUG=True
+DEBUG=True # USE DEBUG TRUE ONLY FOR DEV
 VITE_ALLOWED_HOSTS=localhost,127.0.0.1
-LOGGING=True
-BASE_URL=http://localhost:3000
+LOGGING=True # USE LOGGING TRUE ONLY FOR DEV
+BASE_URL=http://localhost:3000 # CHANGE TO YOUR PRODUCTION SERVER URL
 ```
 
 Install dependencies:
@@ -134,7 +134,7 @@ New features should go in their own route file. Import and mount in `server.js` 
 
 ## License
 
-iAmTeacher Frontend/app is dual-licensed under the AGPLv3 license and a bespoke license granted exclusively to Zymple. While the general public may use, modify, and distribute the software under the terms of the AGPLv3, Zymple is additionally permitted to use, modify, and distribute the software under the terms of a separate, bespoke license at Zymple's discretion.
+- iAmTeacher Frontend/app is dual-licensed under the AGPLv3 license and a bespoke license granted exclusively to Zymple. While the general public may use, modify, and distribute the software under the terms of the AGPLv3, Zymple is additionally permitted to use, modify, and distribute the software under the terms of a separate, bespoke license at Zymple's discretion.
 
 Zymple is a business unit of Manima BKK Co., Ltd.
 
