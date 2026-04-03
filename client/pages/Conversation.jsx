@@ -357,6 +357,14 @@ export default function Conversation() {
           }
         }
 
+        // When student speech is transcribed
+        if (
+          event.type === "conversation.item.input_audio_transcription.completed" &&
+          event.transcript
+        ) {
+          logConv("USER", event.transcript);
+        }
+
         setEvents((prev) => [event, ...prev]);
       } catch (err) {
         console.warn("Failed to parse dataChannel message", err);

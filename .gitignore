@@ -35,3 +35,6 @@ userdata*
 
 # log
 logs*
+
+# Database
+*.db*
