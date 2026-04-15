@@ -357,6 +357,20 @@ export default function Conversation() {
           }
         }
 
+        // When student speech is transcribed
+        if (
+          event.type === "conversation.item.input_audio_transcription.completed" &&
+          event.transcript
+        ) {
+          logConv("USER", event.transcript);
+        }
+
+        // Log token usage
+        if (event.type === "response.done" && event.response?.usage) {
+          const { input_tokens, output_tokens } = event.response.usage;
+          postJSON("/conversation/tokens", { input_tokens, output_tokens });
+        }
+        
         setEvents((prev) => [event, ...prev]);
       } catch (err) {
         console.warn("Failed to parse dataChannel message", err);
