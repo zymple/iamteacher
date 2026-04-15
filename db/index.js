@@ -18,16 +18,14 @@ export function initDb() {
 
   // ---- Schema ----
   db.exec(`
-    CREATE TABLE IF NOT EXISTS token_usage (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      email       TEXT    NOT NULL,
-      session_id  TEXT    NOT NULL,
-      input_tokens  INTEGER NOT NULL DEFAULT 0,
-      output_tokens INTEGER NOT NULL DEFAULT 0,
-      created_at  TEXT    DEFAULT (datetime('now'))
+    CREATE TABLE IF NOT EXISTS users (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      email         TEXT    UNIQUE NOT NULL,
+      password_hash TEXT    NOT NULL,
+      role          TEXT    NOT NULL DEFAULT 'student'
+                            CHECK(role IN ('student', 'teacher', 'admin')),
+      created_at    TEXT    DEFAULT (datetime('now'))
     );
-    CREATE INDEX IF NOT EXISTS idx_token_email
-      ON token_usage(email, session_id);
 
     CREATE TABLE IF NOT EXISTS sessions (
       token       TEXT PRIMARY KEY,
@@ -58,11 +56,34 @@ export function initDb() {
     );
     CREATE INDEX IF NOT EXISTS idx_access_created
       ON access_logs(created_at);
+
+    CREATE TABLE IF NOT EXISTS token_usage (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      email         TEXT    NOT NULL,
+      session_id    TEXT    NOT NULL,
+      input_tokens  INTEGER NOT NULL DEFAULT 0,
+      output_tokens INTEGER NOT NULL DEFAULT 0,
+      created_at    TEXT    DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_token_email
+      ON token_usage(email, session_id);
   `);
 
-  // ---- Migrate config/user.txt if DB is brand new ----
-  if (isNewDb) {
+  // Verify schema applied successfully before attempting migration
+  const tableCheck = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+    .get();
+
+  if (!tableCheck) {
+    throw new Error("Schema initialization failed: 'users' table was not created.");
+  }
+
+  // ---- Migrate config/user.txt only if users table is empty ----
+  const userCount = db.prepare("SELECT COUNT(*) AS n FROM users").get().n;
+  if (userCount === 0) {
     migrateUserTxt();
+  } else if (isNewDb) {
+    console.log("ℹ️  New database created with existing users — skipping migration.");
   }
 
   console.log("✅ Database ready.");
