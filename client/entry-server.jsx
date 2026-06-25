@@ -5,7 +5,6 @@ import { Routes, Route } from "react-router-dom";
 import App from "./pages/App";
 import Login from "./pages/login";
 import Register from "./pages/register";
-import EmailLogin from "./pages/email_login";
 import Conversation from "./pages/Conversation";
 import NotFound from './pages/NotFound.jsx'
 import MePage from "./pages/MePage";
@@ -26,7 +25,6 @@ export function render(url) {
           <Route path="/me" element={<MePage />} />
           <Route path="/lesson" element={<LessonPage />} />
           <Route path="/conversation" element={<Conversation />} />
-          <Route path="/email" element={<EmailLogin />} />
           <Route path="*" element={<NotFound />} />  {/* catch-all 404 */}
         </Routes>
       </StaticRouter>

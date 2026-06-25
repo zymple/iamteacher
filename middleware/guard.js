@@ -2,7 +2,7 @@
  * Block unauthenticated users from non-public routes.
  */
 export function routeGuard(req, res, next) {
-  const publicPaths = ["/login", "/register", "/email", "/config", "/me", "/lesson"];
+  const publicPaths = ["/login", "/register", "/config", "/me", "/lesson"];
   const isPublic =
     publicPaths.some((p) => req.path.startsWith(p)) ||
     req.method === "OPTIONS" ||
